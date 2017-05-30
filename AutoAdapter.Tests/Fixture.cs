@@ -11,13 +11,7 @@ namespace AutoAdapter.Tests
 
         private Maybe<string> testClassName;
 
-        private Maybe<string> sourceInterfaceName;
-
-        private Maybe<string> targetInterfaceName;
-
-        private Maybe<string> sourceClassName;
-
-        private Maybe<string> createAdapterMethodName;
+        private Maybe<string> useMethodName;
 
         private Maybe<string> nameOfMethodOnTargetInterface;
 
@@ -35,72 +29,43 @@ namespace AutoAdapter.Tests
             return this;
         }
 
-        public Fixture SetNamespace(string @namespace)
+        public Fixture SetUseMethodName(string name)
         {
-            if(this.@namespace.HasValue)
+            if (useMethodName.HasValue)
+                throw new Exception("'Use' method name is already set");
+
+            useMethodName = name;
+
+            return this;
+        }
+
+
+        public Fixture SetNamespace(string name)
+        {
+            if(@namespace.HasValue)
                 throw new Exception("namespace is already set");
 
-            this.@namespace = @namespace;
+            @namespace = name;
 
             return this;
         }
 
         public Fixture SetTestClassName(string name)
         {
-            if (this.testClassName.HasValue)
+            if (testClassName.HasValue)
                 throw new Exception("Test class name is already set");
 
-            this.testClassName = name;
-
-            return this;
-        }
-
-        public Fixture SetSourceInterfaceName(string name)
-        {
-            if (this.sourceInterfaceName.HasValue)
-                throw new Exception("Source interface name is already set");
-
-            this.sourceInterfaceName = name;
-
-            return this;
-        }
-
-        public Fixture SetTargetInterfaceName(string name)
-        {
-            if (this.targetInterfaceName.HasValue)
-                throw new Exception("Target interface name is already set");
-
-            this.targetInterfaceName = name;
-
-            return this;
-        }
-
-        public Fixture SetSourceClassName(string name)
-        {
-            if (this.sourceClassName.HasValue)
-                throw new Exception("Source class name is already set");
-
-            this.sourceClassName = name;
-
-            return this;
-        }
-
-        public Fixture SetCreateAdapterMethodName(string name)
-        {
-            if (this.createAdapterMethodName.HasValue)
-                throw new Exception("CreateAdapter method name is already set");
-
-            this.createAdapterMethodName = name;
+            testClassName = name;
 
             return this;
         }
 
         public Fixture SetNameOfMethodOnTargetInterface(string name)
         {
-            if (this.nameOfMethodOnTargetInterface.HasValue)
+            if (nameOfMethodOnTargetInterface.HasValue)
                 throw new Exception("Name of method on target interface is already set");
 
-            this.nameOfMethodOnTargetInterface = name;
+            nameOfMethodOnTargetInterface = name;
 
             return this;
         }
@@ -111,26 +76,14 @@ namespace AutoAdapter.Tests
 
             var testClassType = assmebly.GetType($"{namePrefix}{testClassName.GetValueOr("Class")}");
 
-            var createAdapterMethod = testClassType.GetMethod(createAdapterMethodName.GetValueOr("CreateAdapter"));
-
-            var fromInterfaceType = assmebly.GetType($"{namePrefix}{sourceInterfaceName.GetValueOr("IFromInterface")}");
-
-            var fromClassType = assmebly.GetType($"{namePrefix}{sourceClassName.GetValueOr("FromClass")}");
-
-            var fromClassInstance = Activator.CreateInstance(fromClassType);
-
-            var toInterfaceType = assmebly.GetType($"{namePrefix}{targetInterfaceName.GetValueOr("IToInterface")}");
-
-            var closedCreateAdapterMethod = createAdapterMethod.MakeGenericMethod(fromInterfaceType, toInterfaceType);
-
             object instance = testClassIsStatic ? null : Activator.CreateInstance(testClassType);
 
+            var useMethod = testClassType.GetMethod(useMethodName.GetValueOr("Use"));
+
             //Act
-            var adaptor = closedCreateAdapterMethod.Invoke(instance, new[] { fromClassInstance });
+            var adaptor = useMethod.Invoke(instance, new object[]{});
 
-            int extraParameterValue = 0;
-
-            return toInterfaceType.GetMethod(nameOfMethodOnTargetInterface.GetValueOr("Echo")).Invoke(adaptor, parameters);
+            return adaptor.GetType().GetMethod(nameOfMethodOnTargetInterface.GetValueOr("Echo")).Invoke(adaptor, parameters);
         }
     }
 }

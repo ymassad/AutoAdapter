@@ -10,9 +10,9 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTes
             throw new Exception();
         }
 
-        public void Consumer()
+        public IToInterface Use()
         {
-            CreateAdapter<IFromInterface, IToInterface>(null);
+            return CreateAdapter<IFromInterface, IToInterface>(new FromClass());
         }
     }
 

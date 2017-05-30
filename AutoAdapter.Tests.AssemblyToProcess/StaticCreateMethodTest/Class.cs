@@ -10,9 +10,9 @@ namespace AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest
             throw new Exception();
         }
 
-        public static void Consumer()
+        public static IToInterface Use()
         {
-            CreateAdapter<IFromInterface, IToInterface>(null);
+            return CreateAdapter<IFromInterface, IToInterface>(new FromClass());
         }
     }
 

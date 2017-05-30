@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("AutoAdapter.Nuget")]
+[assembly: AssemblyTitle("AutoAdapter.Fody")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("AutoAdapter.Nuget")]
-[assembly: AssemblyCopyright("Copyright © Yacoub Massad  2017")]
+[assembly: AssemblyProduct("AutoAdapter.Fody")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("6275be02-d288-4806-935f-cca327e1286b")]
+[assembly: Guid("46579c0b-a948-4e05-93d6-a4c653076eb5")]
 
 // Version information for an assembly consists of the following four values:
 //

@@ -72,13 +72,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\AutoAdapter.Fody\AutoAdapter.Fody.csproj">
+      <Project>{46579c0b-a948-4e05-93d6-a4c653076eb5}</Project>
+      <Name>AutoAdapter.Fody</Name>
+    </ProjectReference>
     <ProjectReference Include="..\AutoAdapter.Tests.AssemblyToProcess\AutoAdapter.Tests.AssemblyToProcess.csproj">
       <Project>{b59680bd-5950-4767-8990-1c712be62922}</Project>
       <Name>AutoAdapter.Tests.AssemblyToProcess</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\AutoAdapter\AutoAdapter.csproj">
-      <Project>{d2a95141-68ac-4988-9436-e64f1c4994d9}</Project>
-      <Name>AutoAdapter</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

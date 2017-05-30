@@ -46,13 +46,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AutoAdapter\AutoAdapter.csproj">
-      <Project>{d2a95141-68ac-4988-9436-e64f1c4994d9}</Project>
-      <Name>AutoAdapter</Name>
-    </ProjectReference>
+    <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <ProjectReference Include="..\AutoAdapter.Fody\AutoAdapter.Fody.csproj">
+      <Project>{46579c0b-a948-4e05-93d6-a4c653076eb5}</Project>
+      <Name>AutoAdapter.Fody</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

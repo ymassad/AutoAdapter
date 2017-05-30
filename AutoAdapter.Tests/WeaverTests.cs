@@ -113,6 +113,39 @@ namespace AutoAdapter.Tests
             Assert.AreEqual("TestInput", result);
         }
 
+        [Test]
+        public void ExtraParameterOnTargetInterfaceTest()
+        {
+            //Arrrange
+            var @namespace = "AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTest";
+
+            var testClassType = newAssembly.GetType($"{@namespace}.Class");
+
+            var instance = Activator.CreateInstance(testClassType);
+
+            var createAdapterMethod = testClassType.GetMethod("CreateAdapter");
+
+            var fromInterfaceType = newAssembly.GetType($"{@namespace}.IFromInterface");
+
+            var fromClassType = newAssembly.GetType($"{@namespace}.FromClass");
+
+            var fromClassInstance = Activator.CreateInstance(fromClassType);
+
+            var toInterfaceType = newAssembly.GetType($"{@namespace}.IToInterface");
+
+            var closedCreateAdapterMethod = createAdapterMethod.MakeGenericMethod(fromInterfaceType, toInterfaceType);
+
+            //Act
+            var adaptor = closedCreateAdapterMethod.Invoke(instance, new[] { fromClassInstance });
+
+            int extraParameterValue = 0;
+
+            var result = toInterfaceType.GetMethod("Echo").Invoke(adaptor, new object[] { "TestInput", extraParameterValue });
+
+            //Assert
+            Assert.AreEqual("TestInput", result);
+        }
+
 #if (DEBUG)
         [Test]
         public void PeVerify()

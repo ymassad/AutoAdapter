@@ -62,13 +62,17 @@ namespace AutoAdapter
 
                 methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
-                Enumerable.Range(1, method.Parameters.Count)
-                    .ToList()
-                    .ForEach(x => methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, x));
+                var methodOnSourceType = fromType.Methods.Single(x => x.Name == method.Name);
 
-                var methodOnAdaptedObject = fromType.Methods.Single(x => x.Name == method.Name);
+                var targetMethodParametersThatMatchSourceMethodParameters =
+                    methodOnSourceType.Parameters
+                        .Select(x => method.Parameters.Single(p => p.Name == x.Name))
+                        .ToList();
 
-                methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodOnAdaptedObject);
+                targetMethodParametersThatMatchSourceMethodParameters
+                    .ForEach(x => methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, x.Index + 1));
+
+                methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodOnSourceType);
 
                 methodOnAdapterIlProcessor.Emit(OpCodes.Ret);
 

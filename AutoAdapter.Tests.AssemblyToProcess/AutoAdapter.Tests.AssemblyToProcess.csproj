@@ -40,6 +40,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExtraParameterOnTargetInterfaceTest\Class.cs" />
     <Compile Include="StaticCreateMethodTest\Class.cs" />
     <Compile Include="BasicInterfaceTest\Class.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

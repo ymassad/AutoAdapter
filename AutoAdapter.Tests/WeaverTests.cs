@@ -1,8 +1,7 @@
 using System;
-using System.IO;
-using System.Reflection;
-using FluentAssertions;
-using Mono.Cecil;
+using System.Collections.Generic;
+using System.Linq;
+using AutoAdapter.Tests.AssemblyToProcess;
 using NUnit.Framework;
 
 namespace AutoAdapter.Tests
@@ -10,40 +9,34 @@ namespace AutoAdapter.Tests
     [TestFixture]
     public partial class WeaverTests
     {
-        [Test]
-        public void BasicInterfaceTest()
+        public static IEnumerable<string> GetTestClasses()
         {
-            var result = StartTesting()
-                .SetNamespace("AutoAdapter.Tests.AssemblyToProcess.BasicInterfaceTest")
-                .InvokeAdapterMethod("TestInput");
+            var assembly = typeof(EmptyClass).Assembly;
 
-            result.Should().Be("TestInput");
+            var assemblyName = assembly.GetName().Name;
+
+            return assembly.GetTypes()
+                .Where(x => x.Name == "TestClass")
+                .Select(x => x.FullName.Substring(assemblyName.Length + 1))
+                .Select(x => x.Substring(0, x.Length - ".TestClass".Length))
+                .ToList();
         }
 
-        [Test]
-        public void StaticCreateMethodTest()
+        [TestCaseSource(nameof(GetTestClasses))]
+        public void RunTest(string className)
         {
-            var result = StartTesting()
-                .SetNamespace("AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest")
-                .TestClassIsStatic()
-                .InvokeAdapterMethod("TestInput");
+            var assembly = typeof(EmptyClass).Assembly;
 
-            result.Should().Be("TestInput");
+            var assemblyName = assembly.GetName().Name;
+
+            var testClassType = newAssembly.GetType(assemblyName + "." + className + ".TestClass");
+
+            object instance = testClassType.IsAbstract ? null : Activator.CreateInstance(testClassType);
+
+            var runTestMethod = testClassType.GetMethod("RunTest");
+
+            runTestMethod.Invoke(instance, new object[] { });
         }
-
-        [Test]
-        public void ExtraParameterOnTargetInterfaceTest()
-        {
-            int extraParameterValue = 0;
-
-            var result = StartTesting()
-                .SetNamespace("AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTest")
-                .InvokeAdapterMethod("TestInput", extraParameterValue);
-
-            result.Should().Be("TestInput");
-        }
-
-        private Fixture StartTesting() => new Fixture(newAssembly);
 
 #if (DEBUG)
         [Test]

@@ -1,8 +1,9 @@
 ﻿using System;
+using FluentAssertions;
 
 namespace AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest
 {
-    public static class Class
+    public static class TestClass
     {
         [AdapterMethod]
         public static TTo CreateAdapter<TFrom, TTo>(TFrom instance)
@@ -10,9 +11,11 @@ namespace AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest
             throw new Exception();
         }
 
-        public static IToInterface Use()
+        public static void RunTest()
         {
-            return CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+            var adapter = CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+
+            adapter.Echo("Input").Should().Be("Input");
         }
     }
 

@@ -1,8 +1,9 @@
-﻿using System;
+﻿using FluentAssertions;
+using System;
 
 namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTest
 {
-    public class Class
+    public class TestClass
     {
         [AdapterMethod]
         public TTo CreateAdapter<TFrom, TTo>(TFrom instance)
@@ -10,9 +11,13 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTes
             throw new Exception();
         }
 
-        public IToInterface Use()
+        public void RunTest()
         {
-            return CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+            var adapter = CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+
+            var extraParameter = 0;
+
+            adapter.Echo("Input", extraParameter).Should().Be("Input");
         }
     }
 

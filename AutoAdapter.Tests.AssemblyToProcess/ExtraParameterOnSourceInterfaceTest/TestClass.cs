@@ -5,7 +5,7 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnSourceInterfaceTes
 {
     public class TestClass
     {
-        [AdapterMethod]
+        //[AdapterMethod]
         public TTo CreateAdapter<TFrom, TTo>(TFrom instance, object extraParameters)
         {
             throw new Exception();

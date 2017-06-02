@@ -56,7 +56,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdapterFactory.cs" />
-    <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="IAdapterFactory.cs" />
     <Compile Include="Maybe.cs" />
     <Compile Include="ModuleWeaver.cs" />

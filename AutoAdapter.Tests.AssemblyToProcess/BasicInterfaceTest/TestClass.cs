@@ -5,7 +5,7 @@ namespace AutoAdapter.Tests.AssemblyToProcess.BasicInterfaceTest
 {
     public class TestClass
     {
-        [AdapterMethod]
+        //[AdapterMethod]
         public TTo CreateAdapter<TFrom, TTo>(TFrom instance)
         {
             throw new Exception();

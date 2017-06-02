@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AutoAdapter
+namespace AutoAdapter.Fody
 {
     public struct Maybe<T>
     {

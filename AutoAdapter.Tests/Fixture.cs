@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using AutoAdapter.Fody;
 
 namespace AutoAdapter.Tests
 {

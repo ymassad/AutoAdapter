@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using AutoAdapter.Fody;
 using AutoAdapter.Tests.AssemblyToProcess;
 using Mono.Cecil;
 using NUnit.Framework;

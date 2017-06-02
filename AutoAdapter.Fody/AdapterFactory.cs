@@ -4,7 +4,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 
-namespace AutoAdapter
+namespace AutoAdapter.Fody
 {
     public class AdapterFactory : IAdapterFactory
     {

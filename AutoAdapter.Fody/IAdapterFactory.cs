@@ -1,6 +1,6 @@
 using Mono.Cecil;
 
-namespace AutoAdapter
+namespace AutoAdapter.Fody
 {
     public interface IAdapterFactory
     {

@@ -17,15 +17,26 @@ namespace AutoAdapter.Fody
 
         public TypeDefinition CreateAdapter(AdaptationRequestInstance request)
         {
-            if (!request.ToType.Resolve().IsInterface)
+            if (!request.DestinationType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
 
             var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, moduleDefinition.TypeSystem.Object);
 
-            var adaptedField = new FieldDefinition("adapted", FieldAttributes.InitOnly | FieldAttributes.Private, request.FromType);
+            var adaptedField = AddAdaptedField(request, adapterType);
 
-            adapterType.Fields.Add(adaptedField);
+            var extraParametersField = AddExtraParametersFieldIfRequired(request, adapterType);
 
+            adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
+
+            AddConstructor(request.SourceType, adaptedField, extraParametersField, adapterType);
+
+            AddMethods(request, adaptedField, extraParametersField, adapterType);
+
+            return adapterType;
+        }
+
+        private Maybe<FieldDefinition> AddExtraParametersFieldIfRequired(AdaptationRequestInstance request, TypeDefinition adapterType)
+        {
             Maybe<FieldDefinition> extraParametersField = Maybe<FieldDefinition>.NoValue();
 
             if (request.ExtraParametersType.HasValue)
@@ -38,28 +49,35 @@ namespace AutoAdapter.Fody
 
                 adapterType.Fields.Add(extraParametersField.GetValue());
             }
-
-            adapterType.Interfaces.Add(new InterfaceImplementation(request.ToType));
-
-            CreateConstructor(request.FromType, adaptedField, extraParametersField, adapterType);
-
-            CreateMethods(request, adaptedField, extraParametersField, adapterType);
-
-            return adapterType;
+            return extraParametersField;
         }
 
-        private static void CreateMethods(
+        private FieldDefinition AddAdaptedField(AdaptationRequestInstance request, TypeDefinition adapterType)
+        {
+            var adaptedField =
+                new FieldDefinition(
+                    "adapted",
+                    FieldAttributes.InitOnly | FieldAttributes.Private,
+                    request.SourceType);
+
+            adapterType.Fields.Add(adaptedField);
+
+            return adaptedField;
+        }
+
+        private void AddMethods(
             AdaptationRequestInstance request,
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField,
             TypeDefinition adapterType)
         {
-            var resolvedToType = request.ToType.Resolve();
-            var resolvedFromType = request.FromType.Resolve();
+            var resolvedDestinationType = request.DestinationType.Resolve();
+
+            var resolvedSourceType = request.SourceType.Resolve();
 
             var resolvedExtraParametersType = request.ExtraParametersType.Chain(x => x.Resolve());
 
-            foreach (var targetMethod in resolvedToType.Methods)
+            foreach (var targetMethod in resolvedDestinationType.Methods)
             {
                 var methodOnAdapter =
                     new MethodDefinition(
@@ -80,7 +98,7 @@ namespace AutoAdapter.Fody
 
                 methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
-                var methodOnSourceType = resolvedFromType.Methods.Single(x => x.Name == targetMethod.Name);
+                var methodOnSourceType = resolvedSourceType.Methods.Single(x => x.Name == targetMethod.Name);
 
                 var targetMethodParametersThatMatchSourceMethodParameters =
                     methodOnSourceType.Parameters
@@ -109,18 +127,18 @@ namespace AutoAdapter.Fody
 
                             var propertyGetMethod = propertyOnExtraParametersObject.GetMethod;
 
-                            var declaringType = request.ExtraParametersType.GetValue();
+                            var extraParametersType = request.ExtraParametersType.GetValue();
 
-                            var returnType = propertyGetMethod.MethodReturnType.ReturnType;
+                            var propertyReturnType = propertyGetMethod.MethodReturnType.ReturnType;
 
-                            MethodReference methodReference =
+                            var propertyGetMethodReference =
                                 new MethodReference(
                                         propertyGetMethod.Name,
-                                        returnType,
-                                        declaringType)
+                                        propertyReturnType,
+                                        extraParametersType)
                                     {HasThis = true};
 
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodReference);
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, propertyGetMethodReference);
                         }
                         else
                         {
@@ -136,9 +154,9 @@ namespace AutoAdapter.Fody
             }
         }
 
-        private void CreateConstructor(
-            TypeReference fromType,
-            FieldDefinition field,
+        private void AddConstructor(
+            TypeReference sourceType,
+            FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField,
             TypeDefinition adapterType)
         {
@@ -148,7 +166,7 @@ namespace AutoAdapter.Fody
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
                     moduleDefinition.TypeSystem.Void);
 
-            constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, fromType));
+            constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, sourceType));
 
             if (extraParametersField.HasValue)
             {
@@ -159,12 +177,13 @@ namespace AutoAdapter.Fody
                 moduleDefinition.ImportReference(moduleDefinition.TypeSystem.Object.Resolve().GetConstructors().First());
 
             var processor = constructor.Body.GetILProcessor();
+
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Call, objectConstructor);
 
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);
-            processor.Emit(OpCodes.Stfld, field);
+            processor.Emit(OpCodes.Stfld, adaptedField);
 
             if (extraParametersField.HasValue)
             {

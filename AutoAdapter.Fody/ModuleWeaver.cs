@@ -66,7 +66,7 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Call, getTypeFromHandleMethod);
 
-                    ilProcessor.Emit(OpCodes.Ldtoken, request.FromType);
+                    ilProcessor.Emit(OpCodes.Ldtoken, request.SourceType);
 
                     ilProcessor.Emit(OpCodes.Call, getTypeFromHandleMethod);
 
@@ -80,7 +80,7 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Call, getTypeFromHandleMethod);
 
-                    ilProcessor.Emit(OpCodes.Ldtoken, request.ToType);
+                    ilProcessor.Emit(OpCodes.Ldtoken, request.DestinationType);
 
                     ilProcessor.Emit(OpCodes.Call, getTypeFromHandleMethod);
 
@@ -103,7 +103,7 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Append(exitWithErrorLabel);
 
-                    ilProcessor.Emit(OpCodes.Ldstr, "Cannot convert from " + request.FromType.Name + " to " + request.ToType.Name);
+                    ilProcessor.Emit(OpCodes.Ldstr, "Cannot convert from " + request.SourceType.Name + " to " + request.DestinationType.Name);
 
                     ilProcessor.Emit(
                         OpCodes.Newobj,
@@ -199,20 +199,20 @@ namespace AutoAdapter.Fody
     public class AdaptationRequestInstance
     {
         public AdaptationRequestInstance(
-            TypeReference fromType, TypeReference toType, Maybe<TypeReference> extraParametersType)
+            TypeReference sourceType, TypeReference destinationType, Maybe<TypeReference> extraParametersType)
         {
-            FromType = fromType;
-            ToType = toType;
+            SourceType = sourceType;
+            DestinationType = destinationType;
             ExtraParametersType = extraParametersType;
         }
 
-        public AdaptationRequestInstance(TypeReference fromType, TypeReference toType)
-            : this(fromType, toType, Maybe<TypeReference>.NoValue())
+        public AdaptationRequestInstance(TypeReference sourceType, TypeReference destinationType)
+            : this(sourceType, destinationType, Maybe<TypeReference>.NoValue())
         {
         }
 
-        public TypeReference FromType { get; }
-        public TypeReference ToType { get; }
+        public TypeReference SourceType { get; }
+        public TypeReference DestinationType { get; }
 
         public Maybe<TypeReference> ExtraParametersType { get; }
     }

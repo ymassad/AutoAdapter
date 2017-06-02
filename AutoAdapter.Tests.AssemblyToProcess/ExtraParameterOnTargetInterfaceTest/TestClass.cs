@@ -13,7 +13,7 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTes
 
         public void RunTest()
         {
-            var adapter = CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+            var adapter = CreateAdapter<ISourceInterface, IDestinationInterface>(new SourceClass());
 
             var extraParameter = 0;
 
@@ -21,17 +21,17 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnTargetInterfaceTes
         }
     }
 
-    public interface IFromInterface
+    public interface ISourceInterface
     {
         string Echo(string value);
     }
 
-    public interface IToInterface
+    public interface IDestinationInterface
     {
         string Echo(string value, int extraParameter);
     }
 
-    public class FromClass : IFromInterface
+    public class SourceClass : ISourceInterface
     {
         public string Echo(string value)
         {

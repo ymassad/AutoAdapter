@@ -13,25 +13,25 @@ namespace AutoAdapter.Tests.AssemblyToProcess.ExtraParameterOnSourceInterfaceTes
 
         public void RunTest()
         {
-            var adapter = CreateAdapter<IFromInterface, IToInterface>(
-                new FromClass(),
+            var adapter = CreateAdapter<ISourceInterface, IDestinationInterface>(
+                new SourceClass(),
                 new {extraParameter = 1});
 
             adapter.Concat("Input").Should().Be("Input1");
         }
     }
 
-    public interface IFromInterface
+    public interface ISourceInterface
     {
         string Concat(string value, int extraParameter);
     }
 
-    public interface IToInterface
+    public interface IDestinationInterface
     {
         string Concat(string value);
     }
 
-    public class FromClass : IFromInterface
+    public class SourceClass : ISourceInterface
     {
         public string Concat(string value, int extraParameter)
         {

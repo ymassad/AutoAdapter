@@ -13,23 +13,23 @@ namespace AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest
 
         public static void RunTest()
         {
-            var adapter = CreateAdapter<IFromInterface, IToInterface>(new FromClass());
+            var adapter = CreateAdapter<ISourceInterface, IDestinationInterface>(new SourceClass());
 
             adapter.Echo("Input").Should().Be("Input");
         }
     }
 
-    public interface IFromInterface
+    public interface ISourceInterface
     {
         string Echo(string value);
     }
 
-    public interface IToInterface
+    public interface IDestinationInterface
     {
         string Echo(string value);
     }
 
-    public class FromClass : IFromInterface
+    public class SourceClass : ISourceInterface
     {
         public string Echo(string value)
         {

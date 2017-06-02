@@ -114,8 +114,6 @@ namespace AutoAdapter.Fody
             }
         }
 
-
-
         public AdaptationRequestInstance[] GetAdaptationRequests(MethodDefinition adaptationMethod)
         {
             return ModuleDefinition
@@ -194,26 +192,5 @@ namespace AutoAdapter.Fody
                 .Where(x => x.CustomAttributes.Any(a => a.AttributeType.Name == "AdapterMethodAttribute"))
                 .ToArray();
         }
-    }
-
-    public class AdaptationRequestInstance
-    {
-        public AdaptationRequestInstance(
-            TypeReference sourceType, TypeReference destinationType, Maybe<TypeReference> extraParametersType)
-        {
-            SourceType = sourceType;
-            DestinationType = destinationType;
-            ExtraParametersType = extraParametersType;
-        }
-
-        public AdaptationRequestInstance(TypeReference sourceType, TypeReference destinationType)
-            : this(sourceType, destinationType, Maybe<TypeReference>.NoValue())
-        {
-        }
-
-        public TypeReference SourceType { get; }
-        public TypeReference DestinationType { get; }
-
-        public Maybe<TypeReference> ExtraParametersType { get; }
     }
 }

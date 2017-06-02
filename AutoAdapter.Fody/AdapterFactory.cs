@@ -102,47 +102,25 @@ namespace AutoAdapter.Fody
 
                 var targetMethodParametersThatMatchSourceMethodParameters =
                     methodOnSourceType.Parameters
-                        .Select(x => new {SourceParameter = x, TargetParameter = targetMethod.Parameters.FirstOrDefault(p => p.Name == x.Name)})
+                        .Select(x => new SourceAndTargetParameters(x, targetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
                         .ToArray();
 
                 targetMethodParametersThatMatchSourceMethodParameters
                     .ToList()
-                    .ForEach(x =>
+                    .ForEach(parameters =>
                     {
-                        if (x.TargetParameter == null)
+                        if (parameters.TargetParameter.HasNoValue)
                         {
-                            if(request.ExtraParametersType.HasNoValue)
-                                throw new Exception("Expected ExtraParametersType to have a value");
-
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
-
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, extraParametersField.GetValue());
-                            
-                            var propertyOnExtraParametersObject =
-                                resolvedExtraParametersType.GetValue().Properties
-                                    .FirstOrDefault(p => p.Name == x.SourceParameter.Name);
-
-                            if(propertyOnExtraParametersObject == null)
-                                throw new Exception($"Could not find property {x.SourceParameter.Name} on the extra parameters object");
-
-                            var propertyGetMethod = propertyOnExtraParametersObject.GetMethod;
-
-                            var extraParametersType = request.ExtraParametersType.GetValue();
-
-                            var propertyReturnType = propertyGetMethod.MethodReturnType.ReturnType;
-
-                            var propertyGetMethodReference =
-                                new MethodReference(
-                                        propertyGetMethod.Name,
-                                        propertyReturnType,
-                                        extraParametersType)
-                                    {HasThis = true};
-
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, propertyGetMethodReference);
+                            EmitArgumentUsingExtraParametersObject(
+                                request,
+                                extraParametersField,
+                                methodOnAdapterIlProcessor,
+                                resolvedExtraParametersType,
+                                parameters);
                         }
                         else
                         {
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, x.SourceParameter.Index + 1);
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.SourceParameter.Index + 1);
                         } 
                     });
 
@@ -152,6 +130,44 @@ namespace AutoAdapter.Fody
 
                 adapterType.Methods.Add(methodOnAdapter);
             }
+        }
+
+        private void EmitArgumentUsingExtraParametersObject(
+            AdaptationRequestInstance request,
+            Maybe<FieldDefinition> extraParametersField,
+            ILProcessor methodOnAdapterIlProcessor,
+            Maybe<TypeDefinition> resolvedExtraParametersType,
+            SourceAndTargetParameters parameters)
+        {
+            if (request.ExtraParametersType.HasNoValue)
+                throw new Exception("Expected ExtraParametersType to have a value");
+
+            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
+
+            methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, extraParametersField.GetValue());
+
+            var propertyOnExtraParametersObject =
+                resolvedExtraParametersType.GetValue().Properties
+                    .FirstOrDefault(p => p.Name == parameters.SourceParameter.Name);
+
+            if (propertyOnExtraParametersObject == null)
+                throw new Exception(
+                    $"Could not find property {parameters.SourceParameter.Name} on the extra parameters object");
+
+            var propertyGetMethod = propertyOnExtraParametersObject.GetMethod;
+
+            var extraParametersType = request.ExtraParametersType.GetValue();
+
+            var propertyReturnType = propertyGetMethod.MethodReturnType.ReturnType;
+
+            var propertyGetMethodReference =
+                new MethodReference(
+                        propertyGetMethod.Name,
+                        propertyReturnType,
+                        extraParametersType)
+                    {HasThis = true};
+
+            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, propertyGetMethodReference);
         }
 
         private void AddConstructor(

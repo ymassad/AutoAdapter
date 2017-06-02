@@ -15,41 +15,59 @@ namespace AutoAdapter
             this.moduleDefinition = moduleDefinition;
         }
 
-        public TypeDefinition CreateAdapter(TypeDefinition fromType, TypeDefinition toType)
+        public TypeDefinition CreateAdapter(AdaptationRequestInstance request)
         {
-            if(!toType.IsInterface)
+            if (!request.ToType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
 
             var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, moduleDefinition.TypeSystem.Object);
 
-            var adaptedField = new FieldDefinition("adapted", FieldAttributes.InitOnly | FieldAttributes.Private, fromType);
+            var adaptedField = new FieldDefinition("adapted", FieldAttributes.InitOnly | FieldAttributes.Private, request.FromType);
 
             adapterType.Fields.Add(adaptedField);
 
-            adapterType.Interfaces.Add(new InterfaceImplementation(toType));
+            Maybe<FieldDefinition> extraParametersField = Maybe<FieldDefinition>.NoValue();
 
-            CreateConstructor(fromType, adaptedField, adapterType);
+            if (request.ExtraParametersType.HasValue)
+            {
+                extraParametersField =
+                    new FieldDefinition(
+                        "extraParameters",
+                        FieldAttributes.InitOnly | FieldAttributes.Private,
+                        request.ExtraParametersType.GetValue());
 
-            CreateMethods(fromType, toType, adaptedField, adapterType);
+                adapterType.Fields.Add(extraParametersField.GetValue());
+            }
+
+            adapterType.Interfaces.Add(new InterfaceImplementation(request.ToType));
+
+            CreateConstructor(request.FromType, adaptedField, extraParametersField, adapterType);
+
+            CreateMethods(request, adaptedField, extraParametersField, adapterType);
 
             return adapterType;
         }
 
         private static void CreateMethods(
-            TypeDefinition fromType,
-            TypeDefinition toType,
+            AdaptationRequestInstance request,
             FieldDefinition adaptedField,
+            Maybe<FieldDefinition> extraParametersField,
             TypeDefinition adapterType)
         {
-            foreach (var method in toType.Methods)
+            var resolvedToType = request.ToType.Resolve();
+            var resolvedFromType = request.FromType.Resolve();
+
+            var resolvedExtraParametersType = request.ExtraParametersType.Chain(x => x.Resolve());
+
+            foreach (var targetMethod in resolvedToType.Methods)
             {
                 var methodOnAdapter =
                     new MethodDefinition(
-                        method.Name,
+                        targetMethod.Name,
                         MethodAttributes.Public | MethodAttributes.Virtual,
-                        method.ReturnType);
+                        targetMethod.ReturnType);
 
-                foreach (var param in method.Parameters)
+                foreach (var param in targetMethod.Parameters)
                 {
                     var paramOnMethodOnAdapter = new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
 
@@ -62,15 +80,53 @@ namespace AutoAdapter
 
                 methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
-                var methodOnSourceType = fromType.Methods.Single(x => x.Name == method.Name);
+                var methodOnSourceType = resolvedFromType.Methods.Single(x => x.Name == targetMethod.Name);
 
                 var targetMethodParametersThatMatchSourceMethodParameters =
                     methodOnSourceType.Parameters
-                        .Select(x => method.Parameters.Single(p => p.Name == x.Name))
-                        .ToList();
+                        .Select(x => new {SourceParameter = x, TargetParameter = targetMethod.Parameters.FirstOrDefault(p => p.Name == x.Name)})
+                        .ToArray();
 
                 targetMethodParametersThatMatchSourceMethodParameters
-                    .ForEach(x => methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, x.Index + 1));
+                    .ToList()
+                    .ForEach(x =>
+                    {
+                        if (x.TargetParameter == null)
+                        {
+                            if(request.ExtraParametersType.HasNoValue)
+                                throw new Exception("Expected ExtraParametersType to have a value");
+
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
+
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, extraParametersField.GetValue());
+                            
+                            var propertyOnExtraParametersObject =
+                                resolvedExtraParametersType.GetValue().Properties
+                                    .FirstOrDefault(p => p.Name == x.SourceParameter.Name);
+
+                            if(propertyOnExtraParametersObject == null)
+                                throw new Exception($"Could not find property {x.SourceParameter.Name} on the extra parameters object");
+
+                            var propertyGetMethod = propertyOnExtraParametersObject.GetMethod;
+
+                            var declaringType = request.ExtraParametersType.GetValue();
+
+                            var returnType = propertyGetMethod.MethodReturnType.ReturnType;
+
+                            MethodReference methodReference =
+                                new MethodReference(
+                                        propertyGetMethod.Name,
+                                        returnType,
+                                        declaringType)
+                                    {HasThis = true};
+
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodReference);
+                        }
+                        else
+                        {
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, x.SourceParameter.Index + 1);
+                        } 
+                    });
 
                 methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodOnSourceType);
 
@@ -80,7 +136,11 @@ namespace AutoAdapter
             }
         }
 
-        private void CreateConstructor(TypeDefinition fromType, FieldDefinition field, TypeDefinition adapterType)
+        private void CreateConstructor(
+            TypeReference fromType,
+            FieldDefinition field,
+            Maybe<FieldDefinition> extraParametersField,
+            TypeDefinition adapterType)
         {
             var constructor =
                 new MethodDefinition(
@@ -89,6 +149,11 @@ namespace AutoAdapter
                     moduleDefinition.TypeSystem.Void);
 
             constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, fromType));
+
+            if (extraParametersField.HasValue)
+            {
+                constructor.Parameters.Add(new ParameterDefinition("extraParameters", ParameterAttributes.None, extraParametersField.GetValue().FieldType));
+            }
 
             var objectConstructor =
                 moduleDefinition.ImportReference(moduleDefinition.TypeSystem.Object.Resolve().GetConstructors().First());
@@ -100,6 +165,13 @@ namespace AutoAdapter
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);
             processor.Emit(OpCodes.Stfld, field);
+
+            if (extraParametersField.HasValue)
+            {
+                processor.Emit(OpCodes.Ldarg_0);
+                processor.Emit(OpCodes.Ldarg_2);
+                processor.Emit(OpCodes.Stfld, extraParametersField.GetValue());
+            }
 
             processor.Emit(OpCodes.Ret);
             adapterType.Methods.Add(constructor);

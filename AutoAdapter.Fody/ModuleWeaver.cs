@@ -58,7 +58,7 @@ namespace AutoAdapter
 
                 foreach (var request in adaptationRequests)
                 {
-                    var adapterType = adapterFactory.CreateAdapter(request.FromType, request.ToType);
+                    var adapterType = adapterFactory.CreateAdapter(request);
 
                     ModuleDefinition.Types.Add(adapterType);
 
@@ -90,6 +90,13 @@ namespace AutoAdapter
 
                     ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
 
+                    if (request.ExtraParametersType.HasValue)
+                    {
+                        ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
+
+                        ilProcessor.Emit(OpCodes.Castclass, request.ExtraParametersType.GetValue());
+                    }
+
                     ilProcessor.Emit(OpCodes.Newobj, adapterType.GetConstructors().First());
                     
                     ilProcessor.Emit(OpCodes.Ret);
@@ -107,44 +114,71 @@ namespace AutoAdapter
             }
         }
 
-        public class AdaptationRequestInstance
-        {
-            public AdaptationRequestInstance(TypeDefinition fromType, TypeDefinition toType)
-            {
-                FromType = fromType;
-                ToType = toType;
-            }
 
-            public TypeDefinition FromType { get; }
-            public TypeDefinition ToType { get; }
-        }
 
         public AdaptationRequestInstance[] GetAdaptationRequests(MethodDefinition adaptationMethod)
         {
             return ModuleDefinition
                 .GetTypes()
                 .SelectMany(x => x.GetMethods())
-                .SelectMany(x => GetInstructionInMethodThatCallOtherMethod(x, adaptationMethod))
-                .Select(x => (GenericInstanceMethod) x.Operand)
-                .Select(x => x.GenericArguments)
-                .Select(x => new AdaptationRequestInstance(x[0].Resolve(), x[1].Resolve()))
+                .SelectMany(x =>
+                    GetInstructionsInMethodThatCallSomeGenericMethod(
+                        x,
+                        adaptationMethod)
+                        .Select(index => new {Method = x, InstructionIndex = index}))
+                .Select(x => CreateAdaptationRequestForInstruction(x.Method, x.InstructionIndex))
                 .ToArray();
         }
 
-        private Instruction[] GetInstructionInMethodThatCallOtherMethod(
+        private AdaptationRequestInstance CreateAdaptationRequestForInstruction(
+            MethodDefinition methodToSearch,
+            int instructionIndex)
+        {
+            var bodyInstructions = methodToSearch.Body.Instructions;
+
+            var instruction = bodyInstructions[instructionIndex];
+
+            var genericInstanceMethod = (GenericInstanceMethod) instruction.Operand;
+
+            if (genericInstanceMethod.Parameters.Count == 1)
+            {
+                return new AdaptationRequestInstance(
+                    genericInstanceMethod.GenericArguments[0],
+                    genericInstanceMethod.GenericArguments[1]);
+            }
+            else
+            {
+                var previousInstruction = bodyInstructions[instructionIndex - 1];
+
+                if(previousInstruction.OpCode != OpCodes.Newobj)
+                    throw new Exception("Uexpected to find a Newobj instruction");
+
+                MethodReference constructor = (MethodReference)previousInstruction.Operand;
+
+                return new AdaptationRequestInstance(
+                    genericInstanceMethod.GenericArguments[0],
+                    genericInstanceMethod.GenericArguments[1],
+                    Maybe<TypeReference>.OfValue(constructor.DeclaringType));
+            }
+        }
+
+
+        private int[] GetInstructionsInMethodThatCallSomeGenericMethod(
             MethodDefinition methodToSearch,
             MethodDefinition calledMethod)
         {
             if (!methodToSearch.HasBody)
-                return new Instruction[0];
+                return new int[0];
 
             return
                 methodToSearch
                     .Body
                     .Instructions
-                    .Where(x => x.OpCode == OpCodes.Call)
-                    .Where(x => x.Operand is GenericInstanceMethod)
-                    .Where(x => ((GenericInstanceMethod) x.Operand).ElementMethod == calledMethod)
+                    .Select((x,i) => (Instruction: x, Index: i))
+                    .Where(x => x.Instruction.OpCode == OpCodes.Call)
+                    .Where(x => x.Instruction.Operand is GenericInstanceMethod)
+                    .Where(x => ((GenericInstanceMethod) x.Instruction.Operand).ElementMethod == calledMethod)
+                    .Select(x => x.Index)
                     .ToArray();
         }
 
@@ -160,5 +194,26 @@ namespace AutoAdapter
                 .Where(x => x.CustomAttributes.Any(a => a.AttributeType.Name == "AdapterMethodAttribute"))
                 .ToArray();
         }
+    }
+
+    public class AdaptationRequestInstance
+    {
+        public AdaptationRequestInstance(
+            TypeReference fromType, TypeReference toType, Maybe<TypeReference> extraParametersType)
+        {
+            FromType = fromType;
+            ToType = toType;
+            ExtraParametersType = extraParametersType;
+        }
+
+        public AdaptationRequestInstance(TypeReference fromType, TypeReference toType)
+            : this(fromType, toType, Maybe<TypeReference>.NoValue())
+        {
+        }
+
+        public TypeReference FromType { get; }
+        public TypeReference ToType { get; }
+
+        public Maybe<TypeReference> ExtraParametersType { get; }
     }
 }

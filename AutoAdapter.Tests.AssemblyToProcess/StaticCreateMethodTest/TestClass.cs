@@ -6,7 +6,7 @@ namespace AutoAdapter.Tests.AssemblyToProcess.StaticCreateMethodTest
     public static class TestClass
     {
         //[AdapterMethod]
-        public static TTo CreateAdapter<TFrom, TTo>(TFrom instance)
+        public static TDestination CreateAdapter<TSource, TDestination>(TSource instance)
         {
             throw new Exception();
         }

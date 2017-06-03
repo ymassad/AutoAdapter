@@ -120,7 +120,7 @@ namespace AutoAdapter.Fody
                         }
                         else
                         {
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.SourceParameter.Index + 1);
+                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.TargetParameter.GetValue().Index + 1);
                         } 
                     });
 

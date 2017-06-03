@@ -124,36 +124,9 @@ namespace AutoAdapter.Fody
                                 parameters.SourceParameter.HasDefault &&
                                 parameters.SourceParameter.HasConstant)
                             {
-                                if (parameters.SourceParameter.ParameterType.FullName == "System.Int32")
-                                {
-                                    methodOnAdapterIlProcessor.Emit(
-                                        OpCodes.Ldc_I4,
-                                        (int)parameters.SourceParameter.Constant);
-                                }
-                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Int64")
-                                {
-                                    methodOnAdapterIlProcessor.Emit(
-                                        OpCodes.Ldc_I8,
-                                        (long)parameters.SourceParameter.Constant);
-                                }
-                                else if (parameters.SourceParameter.ParameterType.FullName == "System.String")
-                                {
-                                    methodOnAdapterIlProcessor.Emit(
-                                        OpCodes.Ldstr,
-                                        (string) parameters.SourceParameter.Constant);
-                                }
-                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Single")
-                                {
-                                    methodOnAdapterIlProcessor.Emit(
-                                        OpCodes.Ldc_R4,
-                                        (float)parameters.SourceParameter.Constant);
-                                }
-                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Double")
-                                {
-                                    methodOnAdapterIlProcessor.Emit(
-                                        OpCodes.Ldc_R8,
-                                        (double)parameters.SourceParameter.Constant);
-                                }
+                                EmitArgumentUsingDefaultConstantValueOfSourceParameter(
+                                    parameters,
+                                    methodOnAdapterIlProcessor);
                             }
                             else
                             {
@@ -173,6 +146,42 @@ namespace AutoAdapter.Fody
 
                 adapterType.Methods.Add(methodOnAdapter);
             }
+        }
+
+        private static void EmitArgumentUsingDefaultConstantValueOfSourceParameter(SourceAndTargetParameters parameters,
+            ILProcessor methodOnAdapterIlProcessor)
+        {
+            if (parameters.SourceParameter.ParameterType.FullName == "System.Int32")
+            {
+                methodOnAdapterIlProcessor.Emit(
+                    OpCodes.Ldc_I4,
+                    (int) parameters.SourceParameter.Constant);
+            }
+            else if (parameters.SourceParameter.ParameterType.FullName == "System.Int64")
+            {
+                methodOnAdapterIlProcessor.Emit(
+                    OpCodes.Ldc_I8,
+                    (long) parameters.SourceParameter.Constant);
+            }
+            else if (parameters.SourceParameter.ParameterType.FullName == "System.String")
+            {
+                methodOnAdapterIlProcessor.Emit(
+                    OpCodes.Ldstr,
+                    (string) parameters.SourceParameter.Constant);
+            }
+            else if (parameters.SourceParameter.ParameterType.FullName == "System.Single")
+            {
+                methodOnAdapterIlProcessor.Emit(
+                    OpCodes.Ldc_R4,
+                    (float) parameters.SourceParameter.Constant);
+            }
+            else if (parameters.SourceParameter.ParameterType.FullName == "System.Double")
+            {
+                methodOnAdapterIlProcessor.Emit(
+                    OpCodes.Ldc_R8,
+                    (double) parameters.SourceParameter.Constant);
+            }
+            throw new Exception("Unsupported optional parameter constant type");
         }
 
         private void EmitArgumentUsingExtraParametersObject(

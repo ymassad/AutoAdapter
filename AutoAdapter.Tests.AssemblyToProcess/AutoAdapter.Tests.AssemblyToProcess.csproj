@@ -50,6 +50,11 @@
     <Compile Include="DifferentParametersOrderTest\TestClass.cs" />
     <Compile Include="EmptyClass.cs" />
     <Compile Include="ExtraParameterOnSourceInterfaceAndDifferentParametersOrderTest\TestClass.cs" />
+    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\DoubleConstant\TestClass.cs" />
+    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\FloatConstant\TestClass.cs" />
+    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\StringConstant\TestClass.cs" />
+    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int64Constant\TestClass.cs" />
+    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int32Constant\TestClass.cs" />
     <Compile Include="ExtraParameterOnSourceInterfaceTest\TestClass.cs" />
     <Compile Include="ExtraParameterOnTargetInterfaceTest\TestClass.cs" />
     <Compile Include="StaticCreateMethodTest\TestClass.cs" />

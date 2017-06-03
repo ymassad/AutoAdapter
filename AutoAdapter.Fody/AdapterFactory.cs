@@ -111,12 +111,55 @@ namespace AutoAdapter.Fody
                     {
                         if (parameters.TargetParameter.HasNoValue)
                         {
-                            EmitArgumentUsingExtraParametersObject(
-                                request,
-                                extraParametersField,
-                                methodOnAdapterIlProcessor,
-                                resolvedExtraParametersType,
-                                parameters);
+                            if (request.ExtraParametersType.HasValue)
+                            {
+                                EmitArgumentUsingExtraParametersObject(
+                                    request,
+                                    extraParametersField,
+                                    methodOnAdapterIlProcessor,
+                                    resolvedExtraParametersType,
+                                    parameters);
+                            }
+                            else if (parameters.SourceParameter.IsOptional &&
+                                parameters.SourceParameter.HasDefault &&
+                                parameters.SourceParameter.HasConstant)
+                            {
+                                if (parameters.SourceParameter.ParameterType.FullName == "System.Int32")
+                                {
+                                    methodOnAdapterIlProcessor.Emit(
+                                        OpCodes.Ldc_I4,
+                                        (int)parameters.SourceParameter.Constant);
+                                }
+                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Int64")
+                                {
+                                    methodOnAdapterIlProcessor.Emit(
+                                        OpCodes.Ldc_I8,
+                                        (long)parameters.SourceParameter.Constant);
+                                }
+                                else if (parameters.SourceParameter.ParameterType.FullName == "System.String")
+                                {
+                                    methodOnAdapterIlProcessor.Emit(
+                                        OpCodes.Ldstr,
+                                        (string) parameters.SourceParameter.Constant);
+                                }
+                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Single")
+                                {
+                                    methodOnAdapterIlProcessor.Emit(
+                                        OpCodes.Ldc_R4,
+                                        (float)parameters.SourceParameter.Constant);
+                                }
+                                else if (parameters.SourceParameter.ParameterType.FullName == "System.Double")
+                                {
+                                    methodOnAdapterIlProcessor.Emit(
+                                        OpCodes.Ldc_R8,
+                                        (double)parameters.SourceParameter.Constant);
+                                }
+                            }
+                            else
+                            {
+                                throw new Exception(
+                                    $"Source parameter {parameters.SourceParameter.Name} is not optional with a default constant value and no extra parameters object is supplied");
+                            }
                         }
                         else
                         {
@@ -139,9 +182,6 @@ namespace AutoAdapter.Fody
             Maybe<TypeDefinition> resolvedExtraParametersType,
             SourceAndTargetParameters parameters)
         {
-            if (request.ExtraParametersType.HasNoValue)
-                throw new Exception("Expected ExtraParametersType to have a value");
-
             methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
 
             methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, extraParametersField.GetValue());

@@ -136,7 +136,7 @@ namespace AutoAdapter.Fody
                         }
                         else
                         {
-                            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.TargetParameter.GetValue().Index + 1);
+                            EmitArgumentUsingTargetParameter(methodOnAdapterIlProcessor, parameters);
                         } 
                     });
 
@@ -148,7 +148,15 @@ namespace AutoAdapter.Fody
             }
         }
 
-        private static void EmitArgumentUsingDefaultConstantValueOfSourceParameter(SourceAndTargetParameters parameters,
+        private void EmitArgumentUsingTargetParameter(
+            ILProcessor methodOnAdapterIlProcessor,
+            SourceAndTargetParameters parameters)
+        {
+            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.TargetParameter.GetValue().Index + 1);
+        }
+
+        private void EmitArgumentUsingDefaultConstantValueOfSourceParameter(
+            SourceAndTargetParameters parameters,
             ILProcessor methodOnAdapterIlProcessor)
         {
             if (parameters.SourceParameter.ParameterType.FullName == "System.Int32")
@@ -181,7 +189,10 @@ namespace AutoAdapter.Fody
                     OpCodes.Ldc_R8,
                     (double) parameters.SourceParameter.Constant);
             }
-            throw new Exception("Unsupported optional parameter constant type");
+            else
+            {
+                throw new Exception("Unsupported optional parameter constant type");
+            }
         }
 
         private void EmitArgumentUsingExtraParametersObject(

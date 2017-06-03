@@ -61,14 +61,9 @@ namespace AutoAdapter.Tests
 #if (!DEBUG)
         binariesPath = binariesPath.Replace("Debug", "Release");
 #endif
-            var modifiedBinariesPath = Path.Combine(binariesPath, "Modified");
-
-            if (!Directory.Exists(modifiedBinariesPath))
-                Directory.CreateDirectory(modifiedBinariesPath);
-
             var originalAssemblyFilename = Path.Combine(binariesPath, @"AutoAdapter.Tests.AssemblyToProcess.dll");
 
-            var modifiedAssemblyFilename = Path.Combine(modifiedBinariesPath, Guid.NewGuid() + @"AutoAdapter.Tests.AssemblyToProcess.dll");
+            var modifiedAssemblyFilename = Path.Combine(binariesPath, testClassName + ".dll");
 
             File.Copy(originalAssemblyFilename, modifiedAssemblyFilename, true);
 

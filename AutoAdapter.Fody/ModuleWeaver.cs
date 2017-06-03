@@ -90,6 +90,10 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
 
+                    ilProcessor.Emit(OpCodes.Box, adaptationMethod.GenericParameters[0]);
+
+                    ilProcessor.Emit(OpCodes.Castclass, request.SourceType);
+
                     if (request.ExtraParametersType.HasValue)
                     {
                         ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
@@ -98,7 +102,9 @@ namespace AutoAdapter.Fody
                     }
 
                     ilProcessor.Emit(OpCodes.Newobj, adapterType.GetConstructors().First());
-                    
+
+                    ilProcessor.Emit(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[1]);
+
                     ilProcessor.Emit(OpCodes.Ret);
 
                     ilProcessor.Append(exitWithErrorLabel);

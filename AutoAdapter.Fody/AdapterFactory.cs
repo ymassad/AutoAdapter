@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -22,55 +23,55 @@ namespace AutoAdapter.Fody
 
             var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, moduleDefinition.TypeSystem.Object);
 
-            var adaptedField = AddAdaptedField(request, adapterType);
+            var adaptedField = CreateAdaptedField(request);
 
-            var extraParametersField = AddExtraParametersFieldIfRequired(request, adapterType);
+            adapterType.Fields.Add(adaptedField);
+
+            var extraParametersField = CreateExtraParametersField(request);
+
+            if (request.ExtraParametersType.HasValue)
+            {
+                adapterType.Fields.Add(extraParametersField.GetValue());
+            }
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
 
-            AddConstructor(request.SourceType, adaptedField, extraParametersField, adapterType);
+            var constructor = CreateConstructor(request.SourceType, adaptedField, extraParametersField);
 
-            AddMethods(request, adaptedField, extraParametersField, adapterType);
+            adapterType.Methods.Add(constructor);
+
+            var methods = CreateMethods(request, adaptedField, extraParametersField);
+
+            adapterType.Methods.AddRange(methods);
 
             return adapterType;
         }
 
-        private Maybe<FieldDefinition> AddExtraParametersFieldIfRequired(AdaptationRequestInstance request, TypeDefinition adapterType)
+        private Maybe<FieldDefinition> CreateExtraParametersField(AdaptationRequestInstance request)
         {
-            Maybe<FieldDefinition> extraParametersField = Maybe<FieldDefinition>.NoValue();
-
-            if (request.ExtraParametersType.HasValue)
-            {
-                extraParametersField =
+            return request.ExtraParametersType
+                .Chain(value =>
                     new FieldDefinition(
                         "extraParameters",
                         FieldAttributes.InitOnly | FieldAttributes.Private,
-                        request.ExtraParametersType.GetValue());
-
-                adapterType.Fields.Add(extraParametersField.GetValue());
-            }
-            return extraParametersField;
+                        value));
         }
 
-        private FieldDefinition AddAdaptedField(AdaptationRequestInstance request, TypeDefinition adapterType)
+        private FieldDefinition CreateAdaptedField(AdaptationRequestInstance request)
         {
-            var adaptedField =
-                new FieldDefinition(
-                    "adapted",
-                    FieldAttributes.InitOnly | FieldAttributes.Private,
-                    request.SourceType);
-
-            adapterType.Fields.Add(adaptedField);
-
-            return adaptedField;
+            return new FieldDefinition(
+                "adapted",
+                FieldAttributes.InitOnly | FieldAttributes.Private,
+                request.SourceType);
         }
 
-        private void AddMethods(
+        private MethodDefinition[] CreateMethods(
             AdaptationRequestInstance request,
             FieldDefinition adaptedField,
-            Maybe<FieldDefinition> extraParametersField,
-            TypeDefinition adapterType)
+            Maybe<FieldDefinition> extraParametersField)
         {
+            var methods = new List<MethodDefinition>();
+
             var resolvedDestinationType = request.DestinationType.Resolve();
 
             var resolvedSourceType = request.SourceType.Resolve();
@@ -92,119 +93,141 @@ namespace AutoAdapter.Fody
                     methodOnAdapter.Parameters.Add(paramOnMethodOnAdapter);
                 }
 
-                var methodOnAdapterIlProcessor = methodOnAdapter.Body.GetILProcessor();
+                var ilProcessor = methodOnAdapter.Body.GetILProcessor();
 
-                methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
+                ilProcessor.Emit(OpCodes.Ldarg_0);
 
-                methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, adaptedField);
+                ilProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
                 var methodOnSourceType = resolvedSourceType.Methods.Single(x => x.Name == targetMethod.Name);
 
                 var targetMethodParametersThatMatchSourceMethodParameters =
                     methodOnSourceType.Parameters
-                        .Select(x => new SourceAndTargetParameters(x, targetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                        .Select(x => new SourceAndTargetParameters(x,
+                            targetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
                         .ToArray();
 
                 targetMethodParametersThatMatchSourceMethodParameters
                     .ToList()
                     .ForEach(parameters =>
                     {
-                        if (parameters.TargetParameter.HasNoValue)
-                        {
-                            if (request.ExtraParametersType.HasValue)
-                            {
-                                EmitArgumentUsingExtraParametersObject(
-                                    request,
-                                    extraParametersField,
-                                    methodOnAdapterIlProcessor,
-                                    resolvedExtraParametersType,
-                                    parameters);
-                            }
-                            else if (parameters.SourceParameter.IsOptional &&
-                                parameters.SourceParameter.HasDefault &&
-                                parameters.SourceParameter.HasConstant)
-                            {
-                                EmitArgumentUsingDefaultConstantValueOfSourceParameter(
-                                    parameters,
-                                    methodOnAdapterIlProcessor);
-                            }
-                            else
-                            {
-                                throw new Exception(
-                                    $"Source parameter {parameters.SourceParameter.Name} is not optional with a default constant value and no extra parameters object is supplied");
-                            }
-                        }
-                        else
-                        {
-                            EmitArgumentUsingTargetParameter(methodOnAdapterIlProcessor, parameters);
-                        } 
+                        var instructions = CreateInstructionsForArgument(request, extraParametersField, parameters, ilProcessor, resolvedExtraParametersType);
+
+                        ilProcessor.AppendRange(instructions);
                     });
 
-                methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, methodOnSourceType);
+                ilProcessor.Emit(OpCodes.Callvirt, methodOnSourceType);
 
-                methodOnAdapterIlProcessor.Emit(OpCodes.Ret);
+                ilProcessor.Emit(OpCodes.Ret);
 
-                adapterType.Methods.Add(methodOnAdapter);
+                methods.Add(methodOnAdapter);
             }
+
+            return methods.ToArray();
         }
 
-        private void EmitArgumentUsingTargetParameter(
-            ILProcessor methodOnAdapterIlProcessor,
-            SourceAndTargetParameters parameters)
-        {
-            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg, parameters.TargetParameter.GetValue().Index + 1);
-        }
-
-        private void EmitArgumentUsingDefaultConstantValueOfSourceParameter(
-            SourceAndTargetParameters parameters,
-            ILProcessor methodOnAdapterIlProcessor)
-        {
-            if (parameters.SourceParameter.ParameterType.FullName == "System.Int32")
-            {
-                methodOnAdapterIlProcessor.Emit(
-                    OpCodes.Ldc_I4,
-                    (int) parameters.SourceParameter.Constant);
-            }
-            else if (parameters.SourceParameter.ParameterType.FullName == "System.Int64")
-            {
-                methodOnAdapterIlProcessor.Emit(
-                    OpCodes.Ldc_I8,
-                    (long) parameters.SourceParameter.Constant);
-            }
-            else if (parameters.SourceParameter.ParameterType.FullName == "System.String")
-            {
-                methodOnAdapterIlProcessor.Emit(
-                    OpCodes.Ldstr,
-                    (string) parameters.SourceParameter.Constant);
-            }
-            else if (parameters.SourceParameter.ParameterType.FullName == "System.Single")
-            {
-                methodOnAdapterIlProcessor.Emit(
-                    OpCodes.Ldc_R4,
-                    (float) parameters.SourceParameter.Constant);
-            }
-            else if (parameters.SourceParameter.ParameterType.FullName == "System.Double")
-            {
-                methodOnAdapterIlProcessor.Emit(
-                    OpCodes.Ldc_R8,
-                    (double) parameters.SourceParameter.Constant);
-            }
-            else
-            {
-                throw new Exception("Unsupported optional parameter constant type");
-            }
-        }
-
-        private void EmitArgumentUsingExtraParametersObject(
+        private Instruction[] CreateInstructionsForArgument(
             AdaptationRequestInstance request,
             Maybe<FieldDefinition> extraParametersField,
-            ILProcessor methodOnAdapterIlProcessor,
+            SourceAndTargetParameters parameters,
+            ILProcessor ilProcessor,
+            Maybe<TypeDefinition> resolvedExtraParametersType)
+        {
+            if (parameters.TargetParameter.HasValue)
+                return CreateInstructionsForArgumentUsingTargetParameter(
+                    ilProcessor,
+                    parameters);
+
+            if (request.ExtraParametersType.HasValue)
+            {
+                return CreateInsturctionsForArgumentUsingExtraParametersObject(
+                    ilProcessor,
+                    request,
+                    extraParametersField,
+                    resolvedExtraParametersType,
+                    parameters);
+            }
+
+            if (parameters.SourceParameter.IsOptional &&
+                parameters.SourceParameter.HasDefault &&
+                parameters.SourceParameter.HasConstant)
+            {
+                return CreateInsturctionsArgumentUsingDefaultConstantValueOfSourceParameter(
+                    ilProcessor,
+                    parameters);
+            }
+
+            throw new Exception(
+                $"Source parameter {parameters.SourceParameter.Name} is not optional with a default constant value and no extra parameters object is supplied");
+        }
+
+        private Instruction[] CreateInstructionsForArgumentUsingTargetParameter(
+            ILProcessor ilProcessor,
+            SourceAndTargetParameters parameters)
+        {
+            return new[]
+            {
+                ilProcessor.Create(OpCodes.Ldarg, parameters.TargetParameter.GetValue().Index + 1)
+            };
+        }
+
+        private Instruction[] CreateInsturctionsArgumentUsingDefaultConstantValueOfSourceParameter(
+            ILProcessor ilProcessor,
+            SourceAndTargetParameters parameters)
+        {
+            switch (parameters.SourceParameter.ParameterType.FullName)
+            {
+                case "System.Int32":
+                    return new[]
+                    {
+                        ilProcessor.Create(
+                            OpCodes.Ldc_I4,
+                            (int) parameters.SourceParameter.Constant)
+                    };
+                case "System.Int64":
+                    return new[]
+                    {
+                        ilProcessor.Create(
+                            OpCodes.Ldc_I8,
+                            (long) parameters.SourceParameter.Constant)
+                    };
+                case "System.String":
+                    return new[]
+                    {
+                        ilProcessor.Create(
+                            OpCodes.Ldstr,
+                            (string) parameters.SourceParameter.Constant)
+                    };
+                case "System.Single":
+                    return new[]
+                    {
+                        ilProcessor.Create(
+                            OpCodes.Ldc_R4,
+                            (float) parameters.SourceParameter.Constant)
+                    };
+                case "System.Double":
+                    return new[]
+                    {
+                        ilProcessor.Create(
+                            OpCodes.Ldc_R8,
+                            (double) parameters.SourceParameter.Constant)
+                    };
+            }
+            throw new Exception("Unsupported optional parameter constant type");
+        }
+
+        private Instruction[] CreateInsturctionsForArgumentUsingExtraParametersObject(
+            ILProcessor ilProcessor,
+            AdaptationRequestInstance request,
+            Maybe<FieldDefinition> extraParametersField,
             Maybe<TypeDefinition> resolvedExtraParametersType,
             SourceAndTargetParameters parameters)
         {
-            methodOnAdapterIlProcessor.Emit(OpCodes.Ldarg_0);
+            var instructions = new List<Instruction>();
 
-            methodOnAdapterIlProcessor.Emit(OpCodes.Ldfld, extraParametersField.GetValue());
+            instructions.Add(ilProcessor.Create(OpCodes.Ldarg_0));
+
+            instructions.Add(ilProcessor.Create(OpCodes.Ldfld, extraParametersField.GetValue()));
 
             var propertyOnExtraParametersObject =
                 resolvedExtraParametersType.GetValue().Properties
@@ -227,14 +250,15 @@ namespace AutoAdapter.Fody
                         extraParametersType)
                     {HasThis = true};
 
-            methodOnAdapterIlProcessor.Emit(OpCodes.Callvirt, propertyGetMethodReference);
+            instructions.Add(ilProcessor.Create(OpCodes.Callvirt, propertyGetMethodReference));
+
+            return instructions.ToArray();
         }
 
-        private void AddConstructor(
+        private MethodDefinition CreateConstructor(
             TypeReference sourceType,
             FieldDefinition adaptedField,
-            Maybe<FieldDefinition> extraParametersField,
-            TypeDefinition adapterType)
+            Maybe<FieldDefinition> extraParametersField)
         {
             var constructor =
                 new MethodDefinition(
@@ -244,10 +268,13 @@ namespace AutoAdapter.Fody
 
             constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, sourceType));
 
-            if (extraParametersField.HasValue)
+            extraParametersField.ExecuteIfHasValue(value =>
             {
-                constructor.Parameters.Add(new ParameterDefinition("extraParameters", ParameterAttributes.None, extraParametersField.GetValue().FieldType));
-            }
+                constructor.Parameters.Add(
+                    new ParameterDefinition("extraParameters",
+                    ParameterAttributes.None,
+                    value.FieldType));
+            });
 
             var objectConstructor =
                 moduleDefinition.ImportReference(moduleDefinition.TypeSystem.Object.Resolve().GetConstructors().First());
@@ -261,15 +288,16 @@ namespace AutoAdapter.Fody
             processor.Emit(OpCodes.Ldarg_1);
             processor.Emit(OpCodes.Stfld, adaptedField);
 
-            if (extraParametersField.HasValue)
+            extraParametersField.ExecuteIfHasValue(value =>
             {
                 processor.Emit(OpCodes.Ldarg_0);
                 processor.Emit(OpCodes.Ldarg_2);
-                processor.Emit(OpCodes.Stfld, extraParametersField.GetValue());
-            }
+                processor.Emit(OpCodes.Stfld, value);
+            });
 
             processor.Emit(OpCodes.Ret);
-            adapterType.Methods.Add(constructor);
+
+            return constructor;
         }
     }
 }

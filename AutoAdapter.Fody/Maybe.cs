@@ -70,5 +70,11 @@ namespace AutoAdapter.Fody
 
             return new Maybe<R>(function(value));
         }
+
+        public void ExecuteIfHasValue(Action<T> action)
+        {
+            if (hasValue)
+                action(value);
+        }
     }
 }

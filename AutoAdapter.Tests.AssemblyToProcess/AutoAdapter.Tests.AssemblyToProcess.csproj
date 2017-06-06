@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
+    <Compile Include="TwoMethodsInterfacesTest\TestClass.cs" />
     <Compile Include="DifferentParametersOrderTest\TestClass.cs" />
     <Compile Include="EmptyClass.cs" />
     <Compile Include="ExtraParameterOnSourceInterfaceAndDifferentParametersOrderTest\TestClass.cs" />

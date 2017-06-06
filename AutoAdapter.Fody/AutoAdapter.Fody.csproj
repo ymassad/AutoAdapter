@@ -63,9 +63,12 @@
     <Compile Include="ILProcessorExtensionMethods.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />
+    <Compile Include="Interfaces\ISourceAndTargetMethodsMapper.cs" />
+    <Compile Include="SourceAndTargetMethodsMapper.cs" />
     <Compile Include="Maybe.cs" />
     <Compile Include="ModuleWeaver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SourceAndTargetMethods.cs" />
     <Compile Include="SourceAndTargetParameters.cs" />
   </ItemGroup>
   <ItemGroup>

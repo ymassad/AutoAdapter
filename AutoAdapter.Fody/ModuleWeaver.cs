@@ -18,7 +18,11 @@ namespace AutoAdapter.Fody
             LogInfo = m => { };
         }
 
-        private IAdapterFactory CreateAdapterFactory() => new AdapterFactory(ModuleDefinition, new CreatorOfInsturctionsForArgument());
+        private IAdapterFactory CreateAdapterFactory() =>
+            new AdapterFactory(
+                ModuleDefinition,
+                new CreatorOfInsturctionsForArgument(),
+                new SourceAndTargetMethodsMapper());
 
         public void Execute()
         {

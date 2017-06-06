@@ -12,13 +12,16 @@ namespace AutoAdapter.Fody
     {
         private readonly ModuleDefinition moduleDefinition;
         private readonly ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument;
+        private readonly ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper;
 
         public AdapterFactory(
             ModuleDefinition moduleDefinition,
-            ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument)
+            ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument,
+            ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper)
         {
             this.moduleDefinition = moduleDefinition;
             this.creatorOfInsturctionsForArgument = creatorOfInsturctionsForArgument;
+            this.sourceAndTargetMethodsMapper = sourceAndTargetMethodsMapper;
         }
 
         public TypeDefinition CreateAdapter(AdaptationRequestInstance request)
@@ -80,18 +83,22 @@ namespace AutoAdapter.Fody
             var resolvedDestinationType = request.DestinationType.Resolve();
 
             var resolvedSourceType = request.SourceType.Resolve();
-            
-            foreach (var targetMethod in resolvedDestinationType.Methods)
+
+            var targetAndSourceMethods =
+                sourceAndTargetMethodsMapper.CreateMap(resolvedDestinationType, resolvedSourceType);
+
+            foreach (var targetAndSourceMethod in targetAndSourceMethods)
             {
                 var methodOnAdapter =
                     new MethodDefinition(
-                        targetMethod.Name,
+                        targetAndSourceMethod.TargetMethod.Name,
                         MethodAttributes.Public | MethodAttributes.Virtual,
-                        targetMethod.ReturnType);
+                        targetAndSourceMethod.TargetMethod.ReturnType);
 
-                foreach (var param in targetMethod.Parameters)
+                foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
                 {
-                    var paramOnMethodOnAdapter = new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
+                    var paramOnMethodOnAdapter =
+                        new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
 
                     methodOnAdapter.Parameters.Add(paramOnMethodOnAdapter);
                 }
@@ -102,12 +109,10 @@ namespace AutoAdapter.Fody
 
                 ilProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
-                var methodOnSourceType = resolvedSourceType.Methods.Single(x => x.Name == targetMethod.Name);
-
                 var targetMethodParametersThatMatchSourceMethodParameters =
-                    methodOnSourceType.Parameters
+                    targetAndSourceMethod.SourceMethod.Parameters
                         .Select(x => new SourceAndTargetParameters(x,
-                            targetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                            targetAndSourceMethod.TargetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
                         .ToArray();
 
                 targetMethodParametersThatMatchSourceMethodParameters
@@ -125,7 +130,7 @@ namespace AutoAdapter.Fody
                         ilProcessor.AppendRange(instructions);
                     });
 
-                ilProcessor.Emit(OpCodes.Callvirt, methodOnSourceType);
+                ilProcessor.Emit(OpCodes.Callvirt, targetAndSourceMethod.SourceMethod);
 
                 ilProcessor.Emit(OpCodes.Ret);
 

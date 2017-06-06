@@ -8,7 +8,7 @@ namespace AutoAdapter.Fody.Interfaces
         Instruction[] CreateInstructionsForArgument(
             SourceAndTargetParameters parameters,
             ILProcessor ilProcessor,
-            Maybe<TypeReference> extraParametersType,
+            Maybe<TypeReference> extraParametersObjectType,
             Maybe<FieldDefinition> extraParametersField);
     }
 }

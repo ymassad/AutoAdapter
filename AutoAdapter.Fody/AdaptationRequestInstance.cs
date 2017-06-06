@@ -5,11 +5,11 @@ namespace AutoAdapter.Fody
     public class AdaptationRequestInstance
     {
         public AdaptationRequestInstance(
-            TypeReference sourceType, TypeReference destinationType, Maybe<TypeReference> extraParametersType)
+            TypeReference sourceType, TypeReference destinationType, Maybe<TypeReference> extraParametersObjectType)
         {
             SourceType = sourceType;
             DestinationType = destinationType;
-            ExtraParametersType = extraParametersType;
+            ExtraParametersObjectType = extraParametersObjectType;
         }
 
         public AdaptationRequestInstance(TypeReference sourceType, TypeReference destinationType)
@@ -20,6 +20,6 @@ namespace AutoAdapter.Fody
         public TypeReference SourceType { get; }
         public TypeReference DestinationType { get; }
 
-        public Maybe<TypeReference> ExtraParametersType { get; }
+        public Maybe<TypeReference> ExtraParametersObjectType { get; }
     }
 }

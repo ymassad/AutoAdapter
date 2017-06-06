@@ -95,11 +95,11 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Castclass, request.SourceType);
 
-                    if (request.ExtraParametersType.HasValue)
+                    if (request.ExtraParametersObjectType.HasValue)
                     {
                         ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
 
-                        ilProcessor.Emit(OpCodes.Castclass, request.ExtraParametersType.GetValue());
+                        ilProcessor.Emit(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue());
                     }
 
                     ilProcessor.Emit(OpCodes.Newobj, adapterType.GetConstructors().First());

@@ -34,7 +34,7 @@ namespace AutoAdapter.Fody
 
             var extraParametersField = CreateExtraParametersField(request);
 
-            if (request.ExtraParametersType.HasValue)
+            if (request.ExtraParametersObjectType.HasValue)
             {
                 adapterType.Fields.Add(extraParametersField.GetValue());
             }
@@ -54,7 +54,7 @@ namespace AutoAdapter.Fody
 
         private Maybe<FieldDefinition> CreateExtraParametersField(AdaptationRequestInstance request)
         {
-            return request.ExtraParametersType
+            return request.ExtraParametersObjectType
                 .Chain(value =>
                     new FieldDefinition(
                         "extraParameters",
@@ -116,8 +116,11 @@ namespace AutoAdapter.Fody
                     {
                         var instructions =
                             creatorOfInsturctionsForArgument
-                                .CreateInstructionsForArgument(parameters,
-                                    ilProcessor, request.ExtraParametersType, extraParametersField);
+                                .CreateInstructionsForArgument(
+                                    parameters,
+                                    ilProcessor,
+                                    request.ExtraParametersObjectType,
+                                    extraParametersField);
 
                         ilProcessor.AppendRange(instructions);
                     });

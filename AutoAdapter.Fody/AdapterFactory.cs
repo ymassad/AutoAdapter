@@ -75,9 +75,7 @@ namespace AutoAdapter.Fody
             var resolvedDestinationType = request.DestinationType.Resolve();
 
             var resolvedSourceType = request.SourceType.Resolve();
-
-            var resolvedExtraParametersType = request.ExtraParametersType.Chain(x => x.Resolve());
-
+            
             foreach (var targetMethod in resolvedDestinationType.Methods)
             {
                 var methodOnAdapter =
@@ -111,7 +109,7 @@ namespace AutoAdapter.Fody
                     .ToList()
                     .ForEach(parameters =>
                     {
-                        var instructions = CreateInstructionsForArgument(request, extraParametersField, parameters, ilProcessor, resolvedExtraParametersType);
+                        var instructions = CreateInstructionsForArgument(request, extraParametersField, parameters, ilProcessor);
 
                         ilProcessor.AppendRange(instructions);
                     });
@@ -130,8 +128,7 @@ namespace AutoAdapter.Fody
             AdaptationRequestInstance request,
             Maybe<FieldDefinition> extraParametersField,
             SourceAndTargetParameters parameters,
-            ILProcessor ilProcessor,
-            Maybe<TypeDefinition> resolvedExtraParametersType)
+            ILProcessor ilProcessor)
         {
             if (parameters.TargetParameter.HasValue)
                 return CreateInstructionsForArgumentUsingTargetParameter(
@@ -144,7 +141,6 @@ namespace AutoAdapter.Fody
                     ilProcessor,
                     request,
                     extraParametersField,
-                    resolvedExtraParametersType,
                     parameters);
             }
 
@@ -220,9 +216,10 @@ namespace AutoAdapter.Fody
             ILProcessor ilProcessor,
             AdaptationRequestInstance request,
             Maybe<FieldDefinition> extraParametersField,
-            Maybe<TypeDefinition> resolvedExtraParametersType,
             SourceAndTargetParameters parameters)
         {
+            var resolvedExtraParametersType = request.ExtraParametersType.Chain(x => x.Resolve());
+
             var instructions = new List<Instruction>();
 
             instructions.Add(ilProcessor.Create(OpCodes.Ldarg_0));

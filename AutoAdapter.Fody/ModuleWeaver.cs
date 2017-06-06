@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -17,7 +18,7 @@ namespace AutoAdapter.Fody
             LogInfo = m => { };
         }
 
-        private IAdapterFactory CreateAdapterFactory() => new AdapterFactory(ModuleDefinition);
+        private IAdapterFactory CreateAdapterFactory() => new AdapterFactory(ModuleDefinition, new CreatorOfInsturctionsForArgument());
 
         public void Execute()
         {

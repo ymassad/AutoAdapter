@@ -20,7 +20,11 @@ namespace AutoAdapter.Fody
 
             if (extraParametersObjectType.HasValue)
             {
-                return CreateInsturctionsForArgumentUsingExtraParametersObject(parameters, ilProcessor, extraParametersObjectType.GetValue(), extraParametersField);
+                var instructions = CreateInsturctionsForArgumentUsingExtraParametersObject(
+                    parameters, ilProcessor, extraParametersObjectType.GetValue(), extraParametersField);
+
+                if (instructions.HasValue)
+                    return instructions.GetValue();
             }
 
             if (parameters.SourceParameter.IsOptional &&
@@ -31,7 +35,7 @@ namespace AutoAdapter.Fody
             }
 
             throw new Exception(
-                $"Source parameter {parameters.SourceParameter.Name} is not optional with a default constant value and no extra parameters object is supplied");
+                $"Source parameter {parameters.SourceParameter.Name} is not optional with a default constant value and parameter value is not supplied in request");
         }
 
         private Instruction[] CreateInstructionsForArgumentUsingTargetParameter(
@@ -89,7 +93,7 @@ namespace AutoAdapter.Fody
             throw new Exception("Unsupported optional parameter constant type");
         }
 
-        public Instruction[] CreateInsturctionsForArgumentUsingExtraParametersObject(
+        public Maybe<Instruction[]> CreateInsturctionsForArgumentUsingExtraParametersObject(
             SourceAndTargetParameters parameters,
             ILProcessor ilProcessor,
             TypeReference extraParametersObjectType,
@@ -108,8 +112,7 @@ namespace AutoAdapter.Fody
                     .FirstOrDefault(p => p.Name == parameters.SourceParameter.Name);
 
             if (propertyOnExtraParametersObject == null)
-                throw new Exception(
-                    $"Could not find property {parameters.SourceParameter.Name} on the extra parameters object");
+                return Maybe<Instruction[]>.NoValue();
 
             var propertyGetMethod = propertyOnExtraParametersObject.GetMethod;
 

@@ -53,6 +53,11 @@ namespace AutoAdapter.Fody
                 ModuleDefinition.ImportReference(exceptionDefinition.GetConstructors()
                     .First(x => x.Parameters.Count == 1 && x.Parameters[0].ParameterType.FullName == "System.String"));
 
+            var getTypeMethod = ModuleDefinition
+                .ImportReference(
+                    mscorlib.GetType("System.Object")
+                        .Methods.Single(x => x.Name == "GetType" && x.Parameters.Count == 0));
+
             foreach (var adaptationMethod in adaptationMethods)
             {
                 var adaptationRequests = GetAdaptationRequests(adaptationMethod);
@@ -77,9 +82,9 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Callvirt, equalsMethod);
 
-                    var exitWithErrorLabel =  ilProcessor.Create(OpCodes.Nop);
+                    var exitLabel =  ilProcessor.Create(OpCodes.Nop);
 
-                    ilProcessor.Emit(OpCodes.Brfalse, exitWithErrorLabel);
+                    ilProcessor.Emit(OpCodes.Brfalse, exitLabel);
 
                     ilProcessor.Emit(OpCodes.Ldtoken, adaptationMethod.GenericParameters[1]);
 
@@ -91,7 +96,22 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Callvirt, equalsMethod);
 
-                    ilProcessor.Emit(OpCodes.Brfalse, exitWithErrorLabel);
+                    ilProcessor.Emit(OpCodes.Brfalse, exitLabel);
+
+                    if (request.ExtraParametersObjectType.HasValue)
+                    {
+                        ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2);
+
+                        ilProcessor.Emit(OpCodes.Callvirt, getTypeMethod);
+
+                        ilProcessor.Emit(OpCodes.Ldtoken, request.ExtraParametersObjectType.GetValue());
+
+                        ilProcessor.Emit(OpCodes.Call, getTypeFromHandleMethod);
+
+                        ilProcessor.Emit(OpCodes.Callvirt, equalsMethod);
+
+                        ilProcessor.Emit(OpCodes.Brfalse, exitLabel);
+                    }
 
                     ilProcessor.Emit(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1);
 
@@ -112,16 +132,16 @@ namespace AutoAdapter.Fody
 
                     ilProcessor.Emit(OpCodes.Ret);
 
-                    ilProcessor.Append(exitWithErrorLabel);
-
-                    ilProcessor.Emit(OpCodes.Ldstr, "Cannot convert from " + request.SourceType.Name + " to " + request.DestinationType.Name);
-
-                    ilProcessor.Emit(
-                        OpCodes.Newobj,
-                        exceptionConstructor);
-
-                    ilProcessor.Emit(OpCodes.Throw);
+                    ilProcessor.Append(exitLabel);
                 }
+
+                ilProcessor.Emit(OpCodes.Ldstr, "Adaptation request is not registered");
+
+                ilProcessor.Emit(
+                    OpCodes.Newobj,
+                    exceptionConstructor);
+
+                ilProcessor.Emit(OpCodes.Throw);
             }
         }
 

@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
+    <Compile Include="TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
     <Compile Include="ExtraParameterOnSourceInterface_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
     <Compile Include="InterfacesWithSingleMethodButWithDifferentNamesTest\TestClass.cs" />
     <Compile Include="TwoMethodsInterfacesTest\TestClass.cs" />

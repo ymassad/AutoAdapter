@@ -21,7 +21,7 @@ namespace AutoAdapter.Fody
 
         public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
             MethodDefinition adaptationMethod,
-            MethodReferencesNeededForProcessingAdaptationMethod methodReferences)
+            MethodReferencesNeededForProcessingAdaptationMethod neededReferences)
         {
             var typesToAdd = new List<TypeDefinition>();
 
@@ -33,19 +33,25 @@ namespace AutoAdapter.Fody
 
             foreach (var request in adaptationRequests)
             {
-                var adapterType = adapterFactory.CreateAdapter(request);
+                var adapterType =
+                    adapterFactory.CreateAdapter(
+                        request, 
+                        new ReferencesNeededToCreateAdapter(
+                            adaptationMethod.Module.TypeSystem.Object,
+                            adaptationMethod.Module.TypeSystem.Void,
+                            neededReferences.ObjectConstructor));
 
                 typesToAdd.Add(adapterType);
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[0]));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, methodReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.SourceType));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, methodReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, methodReferences.EqualsMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
 
                 var exitLabel = ilProcessor.Create(OpCodes.Nop);
 
@@ -53,13 +59,13 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[1]));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, methodReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.DestinationType));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, methodReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, methodReferences.EqualsMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
@@ -67,13 +73,13 @@ namespace AutoAdapter.Fody
                 {
                     newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, methodReferences.GetTypeMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.GetTypeMethod));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.ExtraParametersObjectType.GetValue()));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, methodReferences.GetTypeFromHandleMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, methodReferences.EqualsMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
                 }
@@ -104,7 +110,7 @@ namespace AutoAdapter.Fody
 
             newBodyInstructions.Add(ilProcessor.Create(
                 OpCodes.Newobj,
-                methodReferences.ExceptionConstructor));
+                neededReferences.ExceptionConstructor));
 
             newBodyInstructions.Add(ilProcessor.Create(OpCodes.Throw));
 

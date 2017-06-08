@@ -63,6 +63,7 @@
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
     <Compile Include="DTOs\AdaptationRequestInstance.cs" />
     <Compile Include="DTOs\MethodReferencesNeededForProcessingAdaptationMethod.cs" />
+    <Compile Include="DTOs\ReferencesNeededToCreateAdapter.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
     <Compile Include="Interfaces\IAdaptationMethodProcessor.cs" />

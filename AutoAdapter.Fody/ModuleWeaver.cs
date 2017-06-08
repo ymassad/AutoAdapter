@@ -23,7 +23,6 @@ namespace AutoAdapter.Fody
         private IAdaptationMethodProcessor CreateAdaptationMethodProcessor() =>
             new AdaptationMethodProcessor(
                 new AdapterFactory(
-                    ModuleDefinition,
                     new CreatorOfInsturctionsForArgument(),
                     new SourceAndTargetMethodsMapper()),
                 new AdaptationRequestsFinder());
@@ -88,8 +87,15 @@ namespace AutoAdapter.Fody
                     mscorlib.GetType("System.Object")
                         .Methods.Single(x => x.Name == "GetType" && x.Parameters.Count == 0));
 
+            var objectConstructor = module.ImportReference(
+                module.TypeSystem.Object.Resolve().GetConstructors().First());
+
             return new MethodReferencesNeededForProcessingAdaptationMethod(
-                getTypeFromHandleMethod, equalsMethod, getTypeMethod, exceptionConstructor);
+                getTypeFromHandleMethod,
+                equalsMethod,
+                getTypeMethod,
+                exceptionConstructor,
+                objectConstructor);
         }
 
     }

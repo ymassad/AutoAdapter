@@ -5,32 +5,28 @@ using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
     public class AdapterFactory : IAdapterFactory
     {
-        private readonly ModuleDefinition moduleDefinition;
         private readonly ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument;
         private readonly ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper;
 
         public AdapterFactory(
-            ModuleDefinition moduleDefinition,
             ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument,
             ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper)
         {
-            this.moduleDefinition = moduleDefinition;
             this.creatorOfInsturctionsForArgument = creatorOfInsturctionsForArgument;
             this.sourceAndTargetMethodsMapper = sourceAndTargetMethodsMapper;
         }
 
-        public TypeDefinition CreateAdapter(AdaptationRequestInstance request)
+        public TypeDefinition CreateAdapter(AdaptationRequestInstance request, ReferencesNeededToCreateAdapter neededReferences)
         {
             if (!request.DestinationType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
-
-            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, moduleDefinition.TypeSystem.Object);
+            
+            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, neededReferences.ObjectClassReference);
 
             var adaptedField = CreateAdaptedField(request);
 
@@ -45,7 +41,7 @@ namespace AutoAdapter.Fody
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
 
-            var constructor = CreateConstructor(request.SourceType, adaptedField, extraParametersField);
+            var constructor = CreateConstructor(request.SourceType, adaptedField, extraParametersField, neededReferences);
 
             adapterType.Methods.Add(constructor);
 
@@ -144,13 +140,14 @@ namespace AutoAdapter.Fody
         private MethodDefinition CreateConstructor(
             TypeReference sourceType,
             FieldDefinition adaptedField,
-            Maybe<FieldDefinition> extraParametersField)
+            Maybe<FieldDefinition> extraParametersField,
+            ReferencesNeededToCreateAdapter neededReferences)
         {
             var constructor =
                 new MethodDefinition(
                     ".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-                    moduleDefinition.TypeSystem.Void);
+                    neededReferences.VoidReference);
 
             constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, sourceType));
 
@@ -162,13 +159,10 @@ namespace AutoAdapter.Fody
                     value.FieldType));
             });
 
-            var objectConstructor =
-                moduleDefinition.ImportReference(moduleDefinition.TypeSystem.Object.Resolve().GetConstructors().First());
-
             var processor = constructor.Body.GetILProcessor();
 
             processor.Emit(OpCodes.Ldarg_0);
-            processor.Emit(OpCodes.Call, objectConstructor);
+            processor.Emit(OpCodes.Call, neededReferences.ObjectConstructorReference);
 
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);

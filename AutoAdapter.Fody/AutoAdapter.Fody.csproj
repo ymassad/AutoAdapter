@@ -55,14 +55,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdaptationMethodProcessor.cs" />
     <Compile Include="AdaptationMethodsFinder.cs" />
-    <Compile Include="AdaptationRequestInstance.cs" />
     <Compile Include="AdaptationRequestsFinder.cs" />
     <Compile Include="AdapterFactory.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
+    <Compile Include="DTOs\AdaptationRequestInstance.cs" />
+    <Compile Include="DTOs\MethodReferencesNeededForProcessingAdaptationMethod.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
+    <Compile Include="Interfaces\IAdaptationMethodProcessor.cs" />
     <Compile Include="Interfaces\IAdaptationMethodsFinder.cs" />
     <Compile Include="Interfaces\IAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
@@ -72,8 +75,9 @@
     <Compile Include="Maybe.cs" />
     <Compile Include="ModuleWeaver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SourceAndTargetMethods.cs" />
-    <Compile Include="SourceAndTargetParameters.cs" />
+    <Compile Include="DTOs\SourceAndTargetMethods.cs" />
+    <Compile Include="DTOs\SourceAndTargetParameters.cs" />
+    <Compile Include="DTOs\TypesToAddToModuleAndNewBodyForAdaptation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

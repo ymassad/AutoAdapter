@@ -1,3 +1,4 @@
+using AutoAdapter.Fody.DTOs;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 

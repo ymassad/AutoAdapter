@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿using AutoAdapter.Fody.DTOs;
+using Mono.Cecil;
 
 namespace AutoAdapter.Fody.Interfaces
 {

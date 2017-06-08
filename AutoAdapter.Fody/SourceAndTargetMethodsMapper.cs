@@ -1,4 +1,5 @@
 using System.Linq;
+using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
 

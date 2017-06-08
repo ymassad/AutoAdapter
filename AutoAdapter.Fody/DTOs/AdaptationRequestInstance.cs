@@ -1,6 +1,6 @@
 using Mono.Cecil;
 
-namespace AutoAdapter.Fody
+namespace AutoAdapter.Fody.DTOs
 {
     public class AdaptationRequestInstance
     {

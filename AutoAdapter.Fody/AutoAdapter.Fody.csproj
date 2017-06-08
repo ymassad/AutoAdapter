@@ -55,12 +55,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdaptationMethodsFinder.cs" />
     <Compile Include="AdaptationRequestInstance.cs" />
+    <Compile Include="AdaptationRequestsFinder.cs" />
     <Compile Include="AdapterFactory.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
+    <Compile Include="Interfaces\IAdaptationMethodsFinder.cs" />
+    <Compile Include="Interfaces\IAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />
     <Compile Include="Interfaces\ISourceAndTargetMethodsMapper.cs" />

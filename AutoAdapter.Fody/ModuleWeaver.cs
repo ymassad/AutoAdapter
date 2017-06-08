@@ -24,11 +24,15 @@ namespace AutoAdapter.Fody
                 new CreatorOfInsturctionsForArgument(),
                 new SourceAndTargetMethodsMapper());
 
+        private IAdaptationMethodsFinder CreateAdaptationMethodsFinder() => new AdaptationMethodsFinder();
+
+        private IAdaptationRequestsFinder CreateAdaptationRequestsFinder() => new AdaptationRequestsFinder();
+
         public void Execute()
         {
             var adapterFactory = CreateAdapterFactory();
 
-            var adaptationMethods = GetAdaptationMethods();
+            var adaptationMethods = CreateAdaptationMethodsFinder().FindAdaptationMethods(ModuleDefinition);
 
             ModuleDefinition mscorlib = ModuleDefinition.ReadModule(typeof(object).Module.FullyQualifiedName);
 
@@ -39,7 +43,7 @@ namespace AutoAdapter.Fody
             var getTypeFromHandleMethod =
                 ModuleDefinition
                     .ImportReference(typeDefinition.Methods.First(x => x.Name == "GetTypeFromHandle"));
-
+            
             var equalsMethod =
                 ModuleDefinition
                     .ImportReference(
@@ -58,9 +62,11 @@ namespace AutoAdapter.Fody
                     mscorlib.GetType("System.Object")
                         .Methods.Single(x => x.Name == "GetType" && x.Parameters.Count == 0));
 
+            var adaptationRequestsFinder = CreateAdaptationRequestsFinder();
+
             foreach (var adaptationMethod in adaptationMethods)
             {
-                var adaptationRequests = GetAdaptationRequests(adaptationMethod);
+                var adaptationRequests = adaptationRequestsFinder.FindRequests(adaptationMethod);
 
                 adaptationMethod.Body.Instructions.Clear();
 
@@ -143,85 +149,6 @@ namespace AutoAdapter.Fody
 
                 ilProcessor.Emit(OpCodes.Throw);
             }
-        }
-
-        public AdaptationRequestInstance[] GetAdaptationRequests(MethodDefinition adaptationMethod)
-        {
-            return ModuleDefinition
-                .GetTypes()
-                .SelectMany(x => x.GetMethods())
-                .SelectMany(x =>
-                    GetInstructionsInMethodThatCallSomeGenericMethod(
-                        x,
-                        adaptationMethod)
-                        .Select(index => new {Method = x, InstructionIndex = index}))
-                .Select(x => CreateAdaptationRequestForInstruction(x.Method, x.InstructionIndex))
-                .ToArray();
-        }
-
-        private AdaptationRequestInstance CreateAdaptationRequestForInstruction(
-            MethodDefinition methodToSearch,
-            int instructionIndex)
-        {
-            var bodyInstructions = methodToSearch.Body.Instructions;
-
-            var instruction = bodyInstructions[instructionIndex];
-
-            var genericInstanceMethod = (GenericInstanceMethod) instruction.Operand;
-
-            if (genericInstanceMethod.Parameters.Count == 1)
-            {
-                return new AdaptationRequestInstance(
-                    genericInstanceMethod.GenericArguments[0],
-                    genericInstanceMethod.GenericArguments[1]);
-            }
-            else
-            {
-                var previousInstruction = bodyInstructions[instructionIndex - 1];
-
-                if(previousInstruction.OpCode != OpCodes.Newobj)
-                    throw new Exception("Uexpected to find a Newobj instruction");
-
-                MethodReference constructor = (MethodReference)previousInstruction.Operand;
-
-                return new AdaptationRequestInstance(
-                    genericInstanceMethod.GenericArguments[0],
-                    genericInstanceMethod.GenericArguments[1],
-                    Maybe<TypeReference>.OfValue(constructor.DeclaringType));
-            }
-        }
-
-
-        private int[] GetInstructionsInMethodThatCallSomeGenericMethod(
-            MethodDefinition methodToSearch,
-            MethodDefinition calledMethod)
-        {
-            if (!methodToSearch.HasBody)
-                return new int[0];
-
-            return
-                methodToSearch
-                    .Body
-                    .Instructions
-                    .Select((x,i) => (Instruction: x, Index: i))
-                    .Where(x => x.Instruction.OpCode == OpCodes.Call)
-                    .Where(x => x.Instruction.Operand is GenericInstanceMethod)
-                    .Where(x => ((GenericInstanceMethod) x.Instruction.Operand).ElementMethod == calledMethod)
-                    .Select(x => x.Index)
-                    .ToArray();
-        }
-
-        private MethodDefinition[] GetAdaptationMethods()
-        {
-            return ModuleDefinition
-                .GetTypes()
-                .SelectMany(x => x.GetMethods())
-                .Where(x => x.Parameters.Count > 0)
-                .Where(x => x.GenericParameters.Count == 2)
-                .Where(x => x.ReturnType == x.GenericParameters[1])
-                .Where(x => x.Parameters[0].ParameterType == x.GenericParameters[0])
-                .Where(x => x.CustomAttributes.Any(a => a.AttributeType.Name == "AdapterMethodAttribute"))
-                .ToArray();
         }
     }
 }

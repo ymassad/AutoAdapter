@@ -62,7 +62,9 @@
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
     <Compile Include="DTOs\AdaptationRequestInstance.cs" />
+    <Compile Include="DTOs\ChangesToModule.cs" />
     <Compile Include="DTOs\MethodReferencesNeededForProcessingAdaptationMethod.cs" />
+    <Compile Include="DTOs\NewBodyForMethod.cs" />
     <Compile Include="DTOs\ReferencesNeededToCreateAdapter.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
@@ -71,7 +73,9 @@
     <Compile Include="Interfaces\IAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />
+    <Compile Include="Interfaces\IModuleProcessor.cs" />
     <Compile Include="Interfaces\ISourceAndTargetMethodsMapper.cs" />
+    <Compile Include="ModuleProcessor.cs" />
     <Compile Include="SourceAndTargetMethodsMapper.cs" />
     <Compile Include="Maybe.cs" />
     <Compile Include="ModuleWeaver.cs" />

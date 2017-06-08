@@ -18,42 +18,34 @@ namespace AutoAdapter.Fody
             LogInfo = m => { };
         }
 
-        private IAdaptationMethodsFinder CreateAdaptationMethodsFinder() => new AdaptationMethodsFinder();
-
-        private IAdaptationMethodProcessor CreateAdaptationMethodProcessor() =>
-            new AdaptationMethodProcessor(
-                new AdapterFactory(
-                    new CreatorOfInsturctionsForArgument(),
-                    new SourceAndTargetMethodsMapper()),
-                new AdaptationRequestsFinder());
-
         public void Execute()
         {
-            var adaptationMethodProcessor = CreateAdaptationMethodProcessor();
-
-            var adaptationMethodsFinder = CreateAdaptationMethodsFinder();
-
-            var adaptationMethods = adaptationMethodsFinder.FindAdaptationMethods(ModuleDefinition);
+            IModuleProcessor moduleProcessor =
+                new ModuleProcessor(
+                    new AdaptationMethodsFinder(),
+                    new AdaptationMethodProcessor(
+                        new AdapterFactory(
+                            new CreatorOfInsturctionsForArgument(),
+                            new SourceAndTargetMethodsMapper()),
+                        new AdaptationRequestsFinder()));
 
             var methodReferencesNeededForProcessingAdaptationMethod =
                 ImportMethodReferencesNeededForProcessingAdaptationMethods(ModuleDefinition);
 
-            foreach (var adaptationMethod in adaptationMethods)
+            var moduleChanges =
+                moduleProcessor
+                    .ProcessModule(ModuleDefinition, methodReferencesNeededForProcessingAdaptationMethod);
+
+            ModuleDefinition.Types.AddRange(moduleChanges.TypesToAdd);
+
+            moduleChanges.NewMethodBodies.ToList().ForEach(method =>
             {
-                var changes =
-                    adaptationMethodProcessor
-                        .ProcessAdaptationMethod(
-                            adaptationMethod,
-                            methodReferencesNeededForProcessingAdaptationMethod);
+                method.Method.Body.Instructions.Clear();
 
-                ModuleDefinition.Types.AddRange(changes.TypesToAdd);
+                var ilProcessor = method.Method.Body.GetILProcessor();
 
-                adaptationMethod.Body.Instructions.Clear();
-
-                var ilProcessor = adaptationMethod.Body.GetILProcessor();
-
-                ilProcessor.AppendRange(changes.NewBodyForAdaptationMethod);
-            }
+                ilProcessor.AppendRange(method.NewBody);
+            });
         }
 
         private MethodReferencesNeededForProcessingAdaptationMethod ImportMethodReferencesNeededForProcessingAdaptationMethods(

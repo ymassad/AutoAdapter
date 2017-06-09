@@ -48,22 +48,22 @@
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
-    <Compile Include="TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
-    <Compile Include="ExtraParameterOnSourceInterface_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
-    <Compile Include="InterfacesWithSingleMethodButWithDifferentNamesTest\TestClass.cs" />
-    <Compile Include="TwoMethodsInterfacesTest\TestClass.cs" />
-    <Compile Include="DifferentParametersOrderTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\ExtraParameterOnSourceInterface_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\InterfacesWithSingleMethodButWithDifferentNamesTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\TwoMethodsInterfacesTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\DifferentParametersOrderTest\TestClass.cs" />
     <Compile Include="EmptyClass.cs" />
-    <Compile Include="ExtraParameterOnSourceInterfaceAndDifferentParametersOrderTest\TestClass.cs" />
-    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\DoubleConstant\TestClass.cs" />
-    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\FloatConstant\TestClass.cs" />
-    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\StringConstant\TestClass.cs" />
-    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int64Constant\TestClass.cs" />
-    <Compile Include="OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int32Constant\TestClass.cs" />
-    <Compile Include="ExtraParameterOnSourceInterfaceTest\TestClass.cs" />
-    <Compile Include="ExtraParameterOnTargetInterfaceTest\TestClass.cs" />
-    <Compile Include="StaticCreateMethodTest\TestClass.cs" />
-    <Compile Include="BasicInterfaceTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\ExtraParameterOnSourceInterfaceAndDifferentParametersOrderTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\DoubleConstant\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\FloatConstant\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\StringConstant\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int64Constant\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\OptionalExtraParameterOnSourceInterfaceWithConstantDefaultValueTest\Int32Constant\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\ExtraParameterOnSourceInterfaceTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\ExtraParameterOnTargetInterfaceTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\StaticCreateMethodTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\BasicInterfaceTest\TestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

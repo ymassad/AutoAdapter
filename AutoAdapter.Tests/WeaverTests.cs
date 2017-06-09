@@ -27,15 +27,15 @@ namespace AutoAdapter.Tests
         }
 
         [TestCaseSource(nameof(GetTestClasses))]
-        public void RunTest(string className)
+        public void RunTest(string testName)
         {
             var assembly = typeof(EmptyClass).Assembly;
 
             var assemblyName = assembly.GetName().Name;
 
-            var fullClassName = assemblyName + "." + className + ".TestClass";
+            var fullClassName = assemblyName + "." + testName + ".TestClass";
 
-            var assemblyInfo = CopyAndModifyAssembly(fullClassName);
+            var assemblyInfo = CopyAndModifyAssembly(fullClassName, testName);
 
             Verifier.Verify(assemblyInfo.OriginalAssemblyFilename, assemblyInfo.ModifiedAssemblyFilename);
 
@@ -48,7 +48,7 @@ namespace AutoAdapter.Tests
             runTestMethod.Invoke(instance, new object[] { });
         }
 
-        public AssemblyInformation CopyAndModifyAssembly(string testClassName)
+        public AssemblyInformation CopyAndModifyAssembly(string fullClassName, string testName)
         {
             var projectDirectory
                 = Path.GetDirectoryName(Path.GetFullPath(
@@ -63,7 +63,7 @@ namespace AutoAdapter.Tests
 #endif
             var originalAssemblyFilename = Path.Combine(binariesPath, @"AutoAdapter.Tests.AssemblyToProcess.dll");
 
-            var modifiedAssemblyFilename = Path.Combine(binariesPath, testClassName + ".dll");
+            var modifiedAssemblyFilename = Path.Combine(binariesPath, testName + ".dll");
 
             File.Copy(originalAssemblyFilename, modifiedAssemblyFilename, true);
 
@@ -73,7 +73,7 @@ namespace AutoAdapter.Tests
                     moduleDefinition.Types.First(x => x.Name == "AdapterMethodAttribute");
 
                 var testClass =
-                    moduleDefinition.Types.First(x => x.FullName == testClassName);
+                    moduleDefinition.Types.First(x => x.FullName == fullClassName);
 
                 var createAdapterMethodOnTestClass =
                     testClass.Methods.First(x => x.Name == "CreateAdapter");

@@ -26,15 +26,14 @@ namespace AutoAdapter.Fody
                     new AdaptationMethodProcessor(
                         new AdapterFactory(
                             new CreatorOfInsturctionsForArgument(),
-                            new SourceAndTargetMethodsMapper()),
-                        new AdaptationRequestsFinder()));
-
-            var methodReferencesNeededForProcessingAdaptationMethod =
-                ImportMethodReferencesNeededForProcessingAdaptationMethods(ModuleDefinition);
+                            new SourceAndTargetMethodsMapper(),
+                            new ReferenceImporter()),
+                        new AdaptationRequestsFinder(),
+                        new ReferenceImporter()));
 
             var moduleChanges =
                 moduleProcessor
-                    .ProcessModule(ModuleDefinition, methodReferencesNeededForProcessingAdaptationMethod);
+                    .ProcessModule(ModuleDefinition);
 
             ModuleDefinition.Types.AddRange(moduleChanges.TypesToAdd);
 
@@ -46,37 +45,6 @@ namespace AutoAdapter.Fody
 
                 ilProcessor.AppendRange(method.NewBody);
             });
-        }
-
-        private MethodReferencesNeededForProcessingAdaptationMethod ImportMethodReferencesNeededForProcessingAdaptationMethods(
-            ModuleDefinition module)
-        {
-            var getTypeFromHandleMethod =
-                module.ImportReference(
-                    typeof(Type).GetMethod("GetTypeFromHandle"));
-
-            var equalsMethod =
-                module.ImportReference(
-                    typeof(Type).GetMethod("Equals", new[] {typeof(Type)}));
-
-            var exceptionConstructor =
-                module.ImportReference(
-                    typeof(Exception).GetConstructor(new[] {typeof(string)}));
-
-            var getTypeMethod =
-                module.ImportReference(
-                    typeof(object).GetMethod("GetType"));
-
-            var objectConstructor =
-                module.ImportReference(
-                    typeof(object).GetConstructor(new Type[0]));
-
-            return new MethodReferencesNeededForProcessingAdaptationMethod(
-                getTypeFromHandleMethod,
-                equalsMethod,
-                getTypeMethod,
-                exceptionConstructor,
-                objectConstructor);
         }
     }
 }

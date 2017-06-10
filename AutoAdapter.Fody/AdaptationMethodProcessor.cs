@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AutoAdapter.Fody.DTOs;
@@ -12,16 +13,21 @@ namespace AutoAdapter.Fody
     {
         private readonly IAdapterFactory adapterFactory;
         private readonly IAdaptationRequestsFinder adaptationRequestsFinder;
+        private readonly IReferenceImporter referenceImporter;
 
-        public AdaptationMethodProcessor(IAdapterFactory adapterFactory, IAdaptationRequestsFinder adaptationRequestsFinder)
+        public AdaptationMethodProcessor(
+            IAdapterFactory adapterFactory,
+            IAdaptationRequestsFinder adaptationRequestsFinder,
+            IReferenceImporter referenceImporter)
         {
             this.adapterFactory = adapterFactory;
             this.adaptationRequestsFinder = adaptationRequestsFinder;
+            this.referenceImporter = referenceImporter;
         }
 
         public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
-            MethodDefinition adaptationMethod,
-            MethodReferencesNeededForProcessingAdaptationMethod neededReferences)
+            ModuleDefinition module,
+            MethodDefinition adaptationMethod)
         {
             var typesToAdd = new List<TypeDefinition>();
 
@@ -31,27 +37,28 @@ namespace AutoAdapter.Fody
 
             var ilProcessor = adaptationMethod.Body.GetILProcessor();
 
+            var getTypeFromHandleMethod = ImportGetTypeFromHandleMethod(module);
+
+            var typeEqualsMethod = ImportTypeEqualsMethod(module);
+
             foreach (var request in adaptationRequests)
             {
                 var adapterType =
-                    adapterFactory.CreateAdapter(
-                        request, 
-                        new ReferencesNeededToCreateAdapter(
-                            adaptationMethod.Module.TypeSystem.Object,
-                            adaptationMethod.Module.TypeSystem.Void,
-                            neededReferences.ObjectConstructor));
+                    adapterFactory.CreateAdapter(module, request);
 
                 typesToAdd.Add(adapterType);
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[0]));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
+
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.SourceType));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
+
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
 
                 var exitLabel = ilProcessor.Create(OpCodes.Nop);
 
@@ -59,13 +66,13 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[1]));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.DestinationType));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
@@ -73,13 +80,13 @@ namespace AutoAdapter.Fody
                 {
                     newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.GetTypeMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, ImportGetTypeMethod(module) ));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.ExtraParametersObjectType.GetValue()));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, neededReferences.GetTypeFromHandleMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, neededReferences.EqualsMethod));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
                 }
@@ -110,11 +117,31 @@ namespace AutoAdapter.Fody
 
             newBodyInstructions.Add(ilProcessor.Create(
                 OpCodes.Newobj,
-                neededReferences.ExceptionConstructor));
+                ImportExceptionConstructor(module)));
 
             newBodyInstructions.Add(ilProcessor.Create(OpCodes.Throw));
 
             return new TypesToAddToModuleAndNewBodyForAdaptation(typesToAdd.ToArray(), newBodyInstructions.ToArray());
+        }
+
+        private MethodReference ImportExceptionConstructor(ModuleDefinition module)
+        {
+            return referenceImporter.ImportMethodReference(module, typeof(Exception).GetConstructor(new[] { typeof(string) }));
+        }
+
+        private MethodReference ImportGetTypeMethod(ModuleDefinition module)
+        {
+            return referenceImporter.ImportMethodReference(module, typeof(object).GetMethod("GetType"));
+        }
+
+        private MethodReference ImportTypeEqualsMethod(ModuleDefinition module)
+        {
+            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("Equals", new[] { typeof(Type) }));
+        }
+
+        private MethodReference ImportGetTypeFromHandleMethod(ModuleDefinition module)
+        {
+            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("GetTypeFromHandle"));
         }
     }
 }

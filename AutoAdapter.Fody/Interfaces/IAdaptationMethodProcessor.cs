@@ -6,7 +6,7 @@ namespace AutoAdapter.Fody.Interfaces
     public interface IAdaptationMethodProcessor
     {
         TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
-            MethodDefinition adaptationMethod,
-            MethodReferencesNeededForProcessingAdaptationMethod neededReferences);
+            ModuleDefinition module,
+            MethodDefinition adaptationMethod);
     }
 }

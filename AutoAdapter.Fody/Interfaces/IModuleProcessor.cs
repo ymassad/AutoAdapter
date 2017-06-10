@@ -5,6 +5,6 @@ namespace AutoAdapter.Fody.Interfaces
 {
     public interface IModuleProcessor
     {
-        ChangesToModule ProcessModule(ModuleDefinition moduleDefinition, MethodReferencesNeededForProcessingAdaptationMethod neededReferences);
+        ChangesToModule ProcessModule(ModuleDefinition module);
     }
 }

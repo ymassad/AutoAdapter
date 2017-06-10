@@ -11,15 +11,17 @@ namespace AutoAdapter.Fody
 
         private readonly IAdaptationMethodProcessor adaptationMethodProcessor;
 
-        public ModuleProcessor(IAdaptationMethodsFinder adaptationMethodsFinder, IAdaptationMethodProcessor adaptationMethodProcessor)
+        public ModuleProcessor(
+            IAdaptationMethodsFinder adaptationMethodsFinder,
+            IAdaptationMethodProcessor adaptationMethodProcessor)
         {
             this.adaptationMethodsFinder = adaptationMethodsFinder;
             this.adaptationMethodProcessor = adaptationMethodProcessor;
         }
 
-        public ChangesToModule ProcessModule(ModuleDefinition moduleDefinition, MethodReferencesNeededForProcessingAdaptationMethod neededReferences)
+        public ChangesToModule ProcessModule(ModuleDefinition module)
         {
-            var adaptationMethods = adaptationMethodsFinder.FindAdaptationMethods(moduleDefinition);
+            var adaptationMethods = adaptationMethodsFinder.FindAdaptationMethods(module);
 
             var typesToAdd = new List<TypeDefinition>();
 
@@ -30,8 +32,8 @@ namespace AutoAdapter.Fody
                 var changes =
                     adaptationMethodProcessor
                         .ProcessAdaptationMethod(
-                            adaptationMethod,
-                            neededReferences);
+                            module,
+                            adaptationMethod);
 
                 typesToAdd.AddRange(changes.TypesToAdd);
 

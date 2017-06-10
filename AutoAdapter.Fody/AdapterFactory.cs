@@ -5,6 +5,10 @@ using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using FieldAttributes = Mono.Cecil.FieldAttributes;
+using MethodAttributes = Mono.Cecil.MethodAttributes;
+using ParameterAttributes = Mono.Cecil.ParameterAttributes;
+using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace AutoAdapter.Fody
 {
@@ -12,21 +16,23 @@ namespace AutoAdapter.Fody
     {
         private readonly ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument;
         private readonly ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper;
+        private readonly IReferenceImporter referenceImporter;
 
         public AdapterFactory(
             ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument,
-            ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper)
+            ISourceAndTargetMethodsMapper sourceAndTargetMethodsMapper, IReferenceImporter referenceImporter)
         {
             this.creatorOfInsturctionsForArgument = creatorOfInsturctionsForArgument;
             this.sourceAndTargetMethodsMapper = sourceAndTargetMethodsMapper;
+            this.referenceImporter = referenceImporter;
         }
 
-        public TypeDefinition CreateAdapter(AdaptationRequestInstance request, ReferencesNeededToCreateAdapter neededReferences)
+        public TypeDefinition CreateAdapter(ModuleDefinition module, AdaptationRequestInstance request)
         {
             if (!request.DestinationType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
             
-            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, neededReferences.ObjectClassReference);
+            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, ImportObjectType(module));
 
             var adaptedField = CreateAdaptedField(request);
 
@@ -41,7 +47,7 @@ namespace AutoAdapter.Fody
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
 
-            var constructor = CreateConstructor(request.SourceType, adaptedField, extraParametersField, neededReferences);
+            var constructor = CreateConstructor(request.SourceType, adaptedField, extraParametersField, module);
 
             adapterType.Methods.Add(constructor);
 
@@ -50,6 +56,11 @@ namespace AutoAdapter.Fody
             adapterType.Methods.AddRange(methods);
 
             return adapterType;
+        }
+
+        private TypeReference ImportObjectType(ModuleDefinition module)
+        {
+            return referenceImporter.ImportTypeReference(module, typeof(object));
         }
 
         private Maybe<FieldDefinition> CreateExtraParametersField(AdaptationRequestInstance request)
@@ -141,13 +152,13 @@ namespace AutoAdapter.Fody
             TypeReference sourceType,
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField,
-            ReferencesNeededToCreateAdapter neededReferences)
+            ModuleDefinition module)
         {
             var constructor =
                 new MethodDefinition(
                     ".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-                    neededReferences.VoidReference);
+                    ImportVoidType(module));
 
             constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, sourceType));
 
@@ -162,7 +173,7 @@ namespace AutoAdapter.Fody
             var processor = constructor.Body.GetILProcessor();
 
             processor.Emit(OpCodes.Ldarg_0);
-            processor.Emit(OpCodes.Call, neededReferences.ObjectConstructorReference);
+            processor.Emit(OpCodes.Call, ImportObjectConstructor(module));
 
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);
@@ -178,6 +189,16 @@ namespace AutoAdapter.Fody
             processor.Emit(OpCodes.Ret);
 
             return constructor;
+        }
+
+        private TypeReference ImportVoidType(ModuleDefinition module)
+        {
+            return referenceImporter.ImportTypeReference(module, typeof(void));
+        }
+
+        private MethodReference ImportObjectConstructor(ModuleDefinition module)
+        {
+            return referenceImporter.ImportMethodReference(module, typeof(object).GetConstructor(new Type[0]));
         }
     }
 }

@@ -51,36 +51,25 @@ namespace AutoAdapter.Fody
         private MethodReferencesNeededForProcessingAdaptationMethod ImportMethodReferencesNeededForProcessingAdaptationMethods(
             ModuleDefinition module)
         {
-            ModuleDefinition mscorlib = ModuleDefinition.ReadModule(typeof(object).Module.FullyQualifiedName);
-
-            var typeDefinition = mscorlib.GetType("System.Type");
-
-            var exceptionDefinition = mscorlib.GetType("System.Exception");
-
             var getTypeFromHandleMethod =
-                module
-                    .ImportReference(typeDefinition.Methods.First(x => x.Name == "GetTypeFromHandle"));
+                module.ImportReference(
+                    typeof(Type).GetMethod("GetTypeFromHandle"));
 
             var equalsMethod =
-                module
-                    .ImportReference(
-                        typeDefinition.Methods
-                            .First(
-                                x => x.Name == "Equals"
-                                     && x.Parameters.Any()
-                                     && x.Parameters[0].ParameterType.FullName == "System.Type"));
+                module.ImportReference(
+                    typeof(Type).GetMethod("Equals", new[] {typeof(Type)}));
 
             var exceptionConstructor =
-                module.ImportReference(exceptionDefinition.GetConstructors()
-                    .First(x => x.Parameters.Count == 1 && x.Parameters[0].ParameterType.FullName == "System.String"));
+                module.ImportReference(
+                    typeof(Exception).GetConstructor(new[] {typeof(string)}));
 
-            var getTypeMethod = module
-                .ImportReference(
-                    mscorlib.GetType("System.Object")
-                        .Methods.Single(x => x.Name == "GetType" && x.Parameters.Count == 0));
+            var getTypeMethod =
+                module.ImportReference(
+                    typeof(object).GetMethod("GetType"));
 
-            var objectConstructor = module.ImportReference(
-                module.TypeSystem.Object.Resolve().GetConstructors().First());
+            var objectConstructor =
+                module.ImportReference(
+                    typeof(object).GetConstructor(new Type[0]));
 
             return new MethodReferencesNeededForProcessingAdaptationMethod(
                 getTypeFromHandleMethod,
@@ -89,6 +78,5 @@ namespace AutoAdapter.Fody
                 exceptionConstructor,
                 objectConstructor);
         }
-
     }
 }

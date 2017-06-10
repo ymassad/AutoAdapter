@@ -59,6 +59,7 @@
     <Compile Include="AdaptationMethodsFinder.cs" />
     <Compile Include="AdaptationRequestsFinder.cs" />
     <Compile Include="AdapterFactory.cs" />
+    <Compile Include="AdapterMethodsCreator.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
     <Compile Include="DTOs\AdaptationRequestInstance.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Interfaces\IAdaptationMethodsFinder.cs" />
     <Compile Include="Interfaces\IAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
+    <Compile Include="Interfaces\IAdapterMethodsCreator.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />
     <Compile Include="Interfaces\IModuleProcessor.cs" />
     <Compile Include="Interfaces\IReferenceImporter.cs" />

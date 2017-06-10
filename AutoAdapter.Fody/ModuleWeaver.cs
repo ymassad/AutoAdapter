@@ -25,8 +25,9 @@ namespace AutoAdapter.Fody
                     new AdaptationMethodsFinder(),
                     new AdaptationMethodProcessor(
                         new AdapterFactory(
-                            new CreatorOfInsturctionsForArgument(),
-                            new SourceAndTargetMethodsMapper(),
+                            new AdapterMethodsCreator( 
+                                new CreatorOfInsturctionsForArgument(),
+                                new SourceAndTargetMethodsMapper()),
                             new ReferenceImporter()),
                         new AdaptationRequestsFinder(),
                         new ReferenceImporter()));

@@ -3,7 +3,6 @@ using System.Linq;
 using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
@@ -40,58 +39,23 @@ namespace AutoAdapter.Fody
                 if(instructionIndex < 3)
                     throw new Exception("Unexpected instruction index");
 
-                var loadMethodNameStringInstruction =  bodyInstructions[instructionIndex - 1]; 
-
-                if(loadMethodNameStringInstruction.OpCode != OpCodes.Ldstr)
-                    throw new Exception("Expected to find a LdStr instruction");
-
-                var methodName = (string)loadMethodNameStringInstruction.Operand;
-
-                var loadStaticClassTypeTokenInstruction = bodyInstructions[instructionIndex - 3];
-
-                if(loadStaticClassTypeTokenInstruction.OpCode != OpCodes.Ldtoken)
-                    throw new Exception("Expected to find a LdToken instruction");
-
-                var staticClassTypeReference = (TypeReference)loadStaticClassTypeTokenInstruction.Operand;
-
                 return new StaticMethodAdaptationRequestInstance(
-                    staticClassTypeReference,
-                    methodName,
-                    genericInstanceMethod.GenericArguments[0]);
+                    sourceStaticClass: bodyInstructions[instructionIndex - 3].GetTypeTokenLoadedViaLdToken(),
+                    sourceStaticMethodName: bodyInstructions[instructionIndex - 1].GetStringLoadedViaLdStr(),
+                    destinationType: genericInstanceMethod.GenericArguments[0]);
             }
             else
             {
                 if (instructionIndex < 4)
                     throw new Exception("Unexpected instruction index");
 
-                var newExtraParametersObjectInstruction = bodyInstructions[instructionIndex - 1];
-
-                if (newExtraParametersObjectInstruction.OpCode != OpCodes.Newobj)
-                    throw new Exception("Expected to find a Newobj instruction");
-
-                MethodReference extraParametersObjectConstructor = (MethodReference)newExtraParametersObjectInstruction.Operand;
-
-                var loadMethodNameStringInstruction = bodyInstructions[instructionIndex - 2];
-
-                if (loadMethodNameStringInstruction.OpCode != OpCodes.Ldstr)
-                    throw new Exception("Expected to find a LdStr instruction");
-
-                var methodName = (string)loadMethodNameStringInstruction.Operand;
-
-                var loadStaticClassTypeTokenInstruction = bodyInstructions[instructionIndex - 4];
-
-                if (loadStaticClassTypeTokenInstruction.OpCode != OpCodes.Ldtoken)
-                    throw new Exception("Expected to find a LdToken instruction");
-
-                var staticClassTypeReference = (TypeReference)loadStaticClassTypeTokenInstruction.Operand;
-
                 return new StaticMethodAdaptationRequestInstance(
-                    staticClassTypeReference,
-                    methodName,
-                    genericInstanceMethod.GenericArguments[0],
-                    Maybe<TypeReference>.OfValue(extraParametersObjectConstructor.DeclaringType));
+                    sourceStaticClass: bodyInstructions[instructionIndex - 4].GetTypeTokenLoadedViaLdToken(),
+                    sourceStaticMethodName: bodyInstructions[instructionIndex - 2].GetStringLoadedViaLdStr(),
+                    destinationType: genericInstanceMethod.GenericArguments[0],
+                    extraParametersObjectType: Maybe<TypeReference>.OfValue(
+                        bodyInstructions[instructionIndex - 1].GetConstructorFromNewObjInstruction().DeclaringType));
             }
         }
-
     }
 }

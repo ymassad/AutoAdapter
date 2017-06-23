@@ -39,9 +39,9 @@ namespace AutoAdapter.Fody
 
             var ilProcessor = method.Body.GetILProcessor();
 
-            var getTypeFromHandleMethod = ImportGetTypeFromHandleMethod(module);
+            var getTypeFromHandleMethod = referenceImporter.ImportGetTypeFromHandleMethod(module);
 
-            var typeEqualsMethod = ImportTypeEqualsMethod(module);
+            var typeEqualsMethod = referenceImporter.ImportTypeEqualsMethod(module);
 
             foreach (var request in adaptationRequests)
             {
@@ -80,7 +80,7 @@ namespace AutoAdapter.Fody
                 {
                     newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
-                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, ImportGetTypeMethod(module) ));
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, referenceImporter.ImportGetTypeMethod(module) ));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.ExtraParametersObjectType.GetValue()));
 
@@ -117,31 +117,11 @@ namespace AutoAdapter.Fody
 
             newBodyInstructions.Add(ilProcessor.Create(
                 OpCodes.Newobj,
-                ImportExceptionConstructor(module)));
+                referenceImporter.ImportExceptionConstructor(module)));
 
             newBodyInstructions.Add(ilProcessor.Create(OpCodes.Throw));
 
             return new TypesToAddToModuleAndNewBodyForAdaptation(typesToAdd.ToArray(), newBodyInstructions.ToArray());
-        }
-
-        private MethodReference ImportExceptionConstructor(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Exception).GetConstructor(new[] { typeof(string) }));
-        }
-
-        private MethodReference ImportGetTypeMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(object).GetMethod("GetType"));
-        }
-
-        private MethodReference ImportTypeEqualsMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("Equals", new[] { typeof(Type) }));
-        }
-
-        private MethodReference ImportGetTypeFromHandleMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("GetTypeFromHandle"));
         }
     }
 }

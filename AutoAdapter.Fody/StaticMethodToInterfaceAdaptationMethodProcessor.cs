@@ -41,11 +41,11 @@ namespace AutoAdapter.Fody
 
             var ilProcessor = method.Body.GetILProcessor();
 
-            var getTypeFromHandleMethod = ImportGetTypeFromHandleMethod(module);
+            var getTypeFromHandleMethod = referenceImporter.ImportGetTypeFromHandleMethod(module);
 
-            var typeEqualsMethod = ImportTypeEqualsMethod(module);
+            var typeEqualsMethod = referenceImporter.ImportTypeEqualsMethod(module);
 
-            var stringEqualsMethod = ImportStringEqualsMethod(module);
+            var stringEqualsMethod = referenceImporter.ImportStringEqualsMethod(module);
 
             foreach (var request in adaptationRequests)
             {
@@ -99,31 +99,11 @@ namespace AutoAdapter.Fody
 
             newBodyInstructions.Add(ilProcessor.Create(
                 OpCodes.Newobj,
-                ImportExceptionConstructor(module)));
+                referenceImporter.ImportExceptionConstructor(module)));
 
             newBodyInstructions.Add(ilProcessor.Create(OpCodes.Throw));
 
             return new TypesToAddToModuleAndNewBodyForAdaptation(typesToAdd.ToArray(), newBodyInstructions.ToArray());
-        }
-
-        private MethodReference ImportExceptionConstructor(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Exception).GetConstructor(new[] { typeof(string) }));
-        }
-
-        private MethodReference ImportTypeEqualsMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("Equals", new[] { typeof(Type) }));
-        }
-
-        private MethodReference ImportStringEqualsMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(string).GetMethod("Equals", new[] { typeof(string) }));
-        }
-
-        private MethodReference ImportGetTypeFromHandleMethod(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(Type).GetMethod("GetTypeFromHandle"));
         }
     }
 }

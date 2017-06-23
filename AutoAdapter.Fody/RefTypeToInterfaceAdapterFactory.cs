@@ -26,7 +26,7 @@ namespace AutoAdapter.Fody
             if (!request.DestinationType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
             
-            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, ImportObjectType(module));
+            var adapterType = new TypeDefinition(null , "Adapter" + Guid.NewGuid(), TypeAttributes.Public, referenceImporter.ImportObjectType(module));
 
             var adaptedField = CreateAdaptedField(request);
 
@@ -50,11 +50,6 @@ namespace AutoAdapter.Fody
             adapterType.Methods.AddRange(methods);
 
             return adapterType;
-        }
-
-        private TypeReference ImportObjectType(ModuleDefinition module)
-        {
-            return referenceImporter.ImportTypeReference(module, typeof(object));
         }
 
         private Maybe<FieldDefinition> CreateExtraParametersField(AdaptationRequestInstance request)
@@ -85,7 +80,7 @@ namespace AutoAdapter.Fody
                 new MethodDefinition(
                     ".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-                    ImportVoidType(module));
+                    referenceImporter.ImportVoidType(module));
 
             constructor.Parameters.Add(new ParameterDefinition("adapted", ParameterAttributes.None, sourceType));
 
@@ -100,7 +95,7 @@ namespace AutoAdapter.Fody
             var processor = constructor.Body.GetILProcessor();
 
             processor.Emit(OpCodes.Ldarg_0);
-            processor.Emit(OpCodes.Call, ImportObjectConstructor(module));
+            processor.Emit(OpCodes.Call, referenceImporter.ImportObjectConstructor(module));
 
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Ldarg_1);
@@ -116,16 +111,6 @@ namespace AutoAdapter.Fody
             processor.Emit(OpCodes.Ret);
 
             return constructor;
-        }
-
-        private TypeReference ImportVoidType(ModuleDefinition module)
-        {
-            return referenceImporter.ImportTypeReference(module, typeof(void));
-        }
-
-        private MethodReference ImportObjectConstructor(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(object).GetConstructor(new Type[0]));
         }
     }
 }

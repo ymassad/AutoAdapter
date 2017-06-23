@@ -60,7 +60,7 @@ namespace AutoAdapter.Fody
             }
 
             var adapterType = new TypeDefinition(
-                null, "Adapter" + Guid.NewGuid(), TypeAttributes.Public, ImportObjectType(module));
+                null, "Adapter" + Guid.NewGuid(), TypeAttributes.Public, referenceImporter.ImportObjectType(module));
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
             
@@ -104,31 +104,16 @@ namespace AutoAdapter.Fody
                 new MethodDefinition(
                     ".ctor",
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
-                    ImportVoidType(module));
+                    referenceImporter.ImportVoidType(module));
 
             var processor = constructor.Body.GetILProcessor();
 
             processor.Emit(OpCodes.Ldarg_0);
-            processor.Emit(OpCodes.Call, ImportObjectConstructor(module));
+            processor.Emit(OpCodes.Call, referenceImporter.ImportObjectConstructor(module));
 
             processor.Emit(OpCodes.Ret);
 
             return constructor;
-        }
-
-        private TypeReference ImportVoidType(ModuleDefinition module)
-        {
-            return referenceImporter.ImportTypeReference(module, typeof(void));
-        }
-
-        private TypeReference ImportObjectType(ModuleDefinition module)
-        {
-            return referenceImporter.ImportTypeReference(module, typeof(object));
-        }
-
-        private MethodReference ImportObjectConstructor(ModuleDefinition module)
-        {
-            return referenceImporter.ImportMethodReference(module, typeof(object).GetConstructor(new Type[0]));
         }
     }
 }

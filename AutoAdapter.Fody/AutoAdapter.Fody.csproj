@@ -58,6 +58,7 @@
     <Compile Include="CompositeModuleProcessor.cs" />
     <Compile Include="DTOs\AdaptationMethod.cs" />
     <Compile Include="DTOs\StaticMethodToInterfaceAdaptationMethod.cs" />
+    <Compile Include="ReferenceImporterExtensionMethods.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodProcessor.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodsFinder.cs" />
     <Compile Include="AdaptationRequestsFinder.cs" />

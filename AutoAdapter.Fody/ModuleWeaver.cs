@@ -32,6 +32,27 @@ namespace AutoAdapter.Fody
                         new AdaptationRequestsFinder(),
                         new ReferenceImporter()));
 
+            var staticMethodAdaptationMethodsFinder = new StaticMethodAdaptationMethodsFinder();
+
+            var methods = staticMethodAdaptationMethodsFinder.FindStaticAdaptationMethods(ModuleDefinition);
+
+            var requestsFinder = new StaticMethodAdaptationRequestsFinder();
+
+            StaticMethodAdapterFactory factory = new StaticMethodAdapterFactory(new ReferenceImporter());
+
+            var processor = new StaticAdaptationMethodProcessor(factory, requestsFinder, new ReferenceImporter());
+
+            foreach (var method in methods )
+            {
+                var result =  processor.ProcessStaticAdaptationMethod(ModuleDefinition, method);
+
+                method.Body.Instructions.Clear();
+
+                method.Body.Instructions.AddRange(result.NewBodyForAdaptationMethod);
+
+                ModuleDefinition.Types.AddRange(result.TypesToAdd);
+            }
+
             var moduleChanges =
                 moduleProcessor
                     .ProcessModule(ModuleDefinition);

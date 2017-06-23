@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\BasicStaticMethodTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\ExtraParameterOnSourceInterface_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\InterfacesWithSingleMethodButWithDifferentNamesTest\TestClass.cs" />

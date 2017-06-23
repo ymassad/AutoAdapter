@@ -15,33 +15,14 @@ namespace AutoAdapter.Fody
             return adaptationMethod
                 .Module
                 .GetTypes()
-                .SelectMany(x => TypeDefinitionRocks.GetMethods(x))
+                .SelectMany(x => x.GetMethods())
                 .SelectMany(x =>
-                    GetInstructionsInMethodThatCallSomeGenericMethod(
-                            x,
-                            adaptationMethod)
-                        .Select(index => new { Method = x, InstructionIndex = index }))
+                    MethodInvocationFinder.GetInstructionsInMethodThatCallSomeGenericMethod(
+                        x,
+                        adaptationMethod)
+                    .Select(index => new { Method = x, InstructionIndex = index }))
                 .Select(x => CreateAdaptationRequestForInstruction(x.Method, x.InstructionIndex))
                 .ToArray();
-        }
-
-        private int[] GetInstructionsInMethodThatCallSomeGenericMethod(
-            MethodDefinition methodToSearch,
-            MethodDefinition calledMethod)
-        {
-            if (!methodToSearch.HasBody)
-                return new int[0];
-
-            return
-                methodToSearch
-                    .Body
-                    .Instructions
-                    .Select((x, i) => (Instruction: x, Index: i))
-                    .Where(x => x.Instruction.OpCode == OpCodes.Call)
-                    .Where(x => x.Instruction.Operand is GenericInstanceMethod)
-                    .Where(x => ((GenericInstanceMethod)x.Instruction.Operand).ElementMethod == calledMethod)
-                    .Select(x => x.Index)
-                    .ToArray();
         }
 
         private AdaptationRequestInstance CreateAdaptationRequestForInstruction(

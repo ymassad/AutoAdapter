@@ -65,6 +65,7 @@
     <Compile Include="DTOs\AdaptationRequestInstance.cs" />
     <Compile Include="DTOs\ChangesToModule.cs" />
     <Compile Include="DTOs\NewBodyForMethod.cs" />
+    <Compile Include="DTOs\StaticMethodAdaptationRequestInstance.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
     <Compile Include="Interfaces\IAdaptationMethodProcessor.cs" />
@@ -76,6 +77,11 @@
     <Compile Include="Interfaces\IModuleProcessor.cs" />
     <Compile Include="Interfaces\IReferenceImporter.cs" />
     <Compile Include="Interfaces\ISourceAndTargetMethodsMapper.cs" />
+    <Compile Include="Interfaces\IStaticAdaptationMethodProcessor.cs" />
+    <Compile Include="Interfaces\IStaticAdaptationMethodsFinder.cs" />
+    <Compile Include="Interfaces\IStaticAdaptationRequestsFinder.cs" />
+    <Compile Include="Interfaces\IStaticMethodAdapterFactory.cs" />
+    <Compile Include="MethodInvocationFinder.cs" />
     <Compile Include="ModuleProcessor.cs" />
     <Compile Include="ReferenceImporter.cs" />
     <Compile Include="SourceAndTargetMethodsMapper.cs" />
@@ -85,6 +91,10 @@
     <Compile Include="DTOs\SourceAndTargetMethods.cs" />
     <Compile Include="DTOs\SourceAndTargetParameters.cs" />
     <Compile Include="DTOs\TypesToAddToModuleAndNewBodyForAdaptation.cs" />
+    <Compile Include="StaticAdaptationMethodProcessor.cs" />
+    <Compile Include="StaticMethodAdaptationMethodsFinder.cs" />
+    <Compile Include="StaticMethodAdaptationRequestsFinder.cs" />
+    <Compile Include="StaticMethodAdapterFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

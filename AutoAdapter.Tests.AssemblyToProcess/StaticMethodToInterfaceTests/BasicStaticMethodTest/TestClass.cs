@@ -8,12 +8,6 @@ namespace AutoAdapter.Tests.AssemblyToProcess.StaticMethodToInterfaceTests.Basic
     public class TestClass
     {
         //[AdapterMethod]
-        public TDestination CreateAdapter<TSource, TDestination>(TSource instance)
-        {
-            throw new Exception();
-        }
-
-        [AdapterMethod]
         public TDestination CreateAdapter<TDestination>(Type @class, string methodName)
         {
             throw new Exception();

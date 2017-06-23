@@ -11,11 +11,11 @@ using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class StaticMethodAdapterFactory : IStaticMethodAdapterFactory
+    public class StaticMethodToInterfaceAdapterFactory : IStaticMethodAdapterFactory
     {
         private readonly IReferenceImporter referenceImporter;
 
-        public StaticMethodAdapterFactory(IReferenceImporter referenceImporter)
+        public StaticMethodToInterfaceAdapterFactory(IReferenceImporter referenceImporter)
         {
             this.referenceImporter = referenceImporter;
         }

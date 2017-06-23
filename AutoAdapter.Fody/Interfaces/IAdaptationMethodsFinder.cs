@@ -2,8 +2,8 @@
 
 namespace AutoAdapter.Fody.Interfaces
 {
-    public interface IAdaptationMethodsFinder
+    public interface IAdaptationMethodsFinder<TAdaptationMethodKind>
     {
-        MethodDefinition[] FindAdaptationMethods(ModuleDefinition moduleDefinition);
+        TAdaptationMethodKind[] FindAdaptationMethods(ModuleDefinition moduleDefinition);
     }
 }

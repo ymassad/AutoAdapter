@@ -11,13 +11,13 @@ using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class StaticAdaptationMethodProcessor : IStaticAdaptationMethodProcessor
+    public class StaticMethodToInterfaceAdaptationMethodProcessor : IAdaptationMethodProcessor<StaticMethodToInterfaceAdaptationMethod>
     {
         private readonly IStaticMethodAdapterFactory adapterFactory;
         private readonly IStaticAdaptationRequestsFinder adaptationRequestsFinder;
         private readonly IReferenceImporter referenceImporter;
 
-        public StaticAdaptationMethodProcessor(
+        public StaticMethodToInterfaceAdaptationMethodProcessor(
             IStaticMethodAdapterFactory adapterFactory,
             IStaticAdaptationRequestsFinder adaptationRequestsFinder,
             IReferenceImporter referenceImporter)
@@ -27,17 +27,19 @@ namespace AutoAdapter.Fody
             this.referenceImporter = referenceImporter;
         }
 
-        public TypesToAddToModuleAndNewBodyForAdaptation ProcessStaticAdaptationMethod(
+        public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
             ModuleDefinition module,
-            MethodDefinition adaptationMethod)
+            StaticMethodToInterfaceAdaptationMethod adaptationMethod)
         {
+            var method = adaptationMethod.Method;
+
             var typesToAdd = new List<TypeDefinition>();
 
             var newBodyInstructions = new List<Instruction>();
 
-            var adaptationRequests = adaptationRequestsFinder.FindRequests(adaptationMethod);
+            var adaptationRequests = adaptationRequestsFinder.FindRequests(method);
 
-            var ilProcessor = adaptationMethod.Body.GetILProcessor();
+            var ilProcessor = method.Body.GetILProcessor();
 
             var getTypeFromHandleMethod = ImportGetTypeFromHandleMethod(module);
 
@@ -52,7 +54,7 @@ namespace AutoAdapter.Fody
 
                 typesToAdd.Add(adapterType);
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[0]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, method.GenericParameters[0]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
@@ -66,7 +68,7 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
-                newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+                newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.SourceStaticClass));
 
@@ -76,7 +78,7 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
-                newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
+                newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldstr , request.SourceStaticMethodName));
 
@@ -86,7 +88,7 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[0]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, method.GenericParameters[0]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ret));
 

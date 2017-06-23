@@ -55,16 +55,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AdaptationMethodProcessor.cs" />
-    <Compile Include="AdaptationMethodsFinder.cs" />
+    <Compile Include="CompositeModuleProcessor.cs" />
+    <Compile Include="DTOs\AdaptationMethod.cs" />
+    <Compile Include="DTOs\StaticMethodToInterfaceAdaptationMethod.cs" />
+    <Compile Include="RefTypeToInterfaceAdaptationMethodProcessor.cs" />
+    <Compile Include="RefTypeToInterfaceAdaptationMethodsFinder.cs" />
     <Compile Include="AdaptationRequestsFinder.cs" />
-    <Compile Include="AdapterFactory.cs" />
+    <Compile Include="RefTypeToInterfaceAdapterFactory.cs" />
     <Compile Include="AdapterMethodsCreator.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
     <Compile Include="DTOs\AdaptationRequestInstance.cs" />
     <Compile Include="DTOs\ChangesToModule.cs" />
     <Compile Include="DTOs\NewBodyForMethod.cs" />
+    <Compile Include="DTOs\RefTypeToInterfaceAdaptationMethod.cs" />
     <Compile Include="DTOs\StaticMethodAdaptationRequestInstance.cs" />
     <Compile Include="EnumerableExtensionMethods.cs" />
     <Compile Include="ILProcessorExtensionMethods.cs" />
@@ -77,8 +81,6 @@
     <Compile Include="Interfaces\IModuleProcessor.cs" />
     <Compile Include="Interfaces\IReferenceImporter.cs" />
     <Compile Include="Interfaces\ISourceAndTargetMethodsMapper.cs" />
-    <Compile Include="Interfaces\IStaticAdaptationMethodProcessor.cs" />
-    <Compile Include="Interfaces\IStaticAdaptationMethodsFinder.cs" />
     <Compile Include="Interfaces\IStaticAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IStaticMethodAdapterFactory.cs" />
     <Compile Include="MethodInvocationFinder.cs" />
@@ -91,10 +93,10 @@
     <Compile Include="DTOs\SourceAndTargetMethods.cs" />
     <Compile Include="DTOs\SourceAndTargetParameters.cs" />
     <Compile Include="DTOs\TypesToAddToModuleAndNewBodyForAdaptation.cs" />
-    <Compile Include="StaticAdaptationMethodProcessor.cs" />
-    <Compile Include="StaticMethodAdaptationMethodsFinder.cs" />
-    <Compile Include="StaticMethodAdaptationRequestsFinder.cs" />
-    <Compile Include="StaticMethodAdapterFactory.cs" />
+    <Compile Include="StaticMethodToInterfaceAdaptationMethodProcessor.cs" />
+    <Compile Include="StaticMethodToInterfaceAdaptationMethodsFinder.cs" />
+    <Compile Include="StaticMethodToInterfaceMethodAdaptationRequestsFinder.cs" />
+    <Compile Include="StaticMethodToInterfaceAdapterFactory.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

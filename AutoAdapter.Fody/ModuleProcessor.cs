@@ -5,15 +5,15 @@ using Mono.Cecil;
 
 namespace AutoAdapter.Fody
 {
-    public class ModuleProcessor : IModuleProcessor
+    public class ModuleProcessor<TAdaptationMethodKind> : IModuleProcessor where TAdaptationMethodKind: AdaptationMethod
     {
-        private readonly IAdaptationMethodsFinder adaptationMethodsFinder;
+        private readonly IAdaptationMethodsFinder<TAdaptationMethodKind> adaptationMethodsFinder;
 
-        private readonly IAdaptationMethodProcessor adaptationMethodProcessor;
+        private readonly IAdaptationMethodProcessor<TAdaptationMethodKind> adaptationMethodProcessor;
 
         public ModuleProcessor(
-            IAdaptationMethodsFinder adaptationMethodsFinder,
-            IAdaptationMethodProcessor adaptationMethodProcessor)
+            IAdaptationMethodsFinder<TAdaptationMethodKind> adaptationMethodsFinder,
+            IAdaptationMethodProcessor<TAdaptationMethodKind> adaptationMethodProcessor)
         {
             this.adaptationMethodsFinder = adaptationMethodsFinder;
             this.adaptationMethodProcessor = adaptationMethodProcessor;
@@ -37,7 +37,7 @@ namespace AutoAdapter.Fody
 
                 typesToAdd.AddRange(changes.TypesToAdd);
 
-                newMethodBodies.Add(new NewBodyForMethod(adaptationMethod, changes.NewBodyForAdaptationMethod));
+                newMethodBodies.Add(new NewBodyForMethod(adaptationMethod.Method , changes.NewBodyForAdaptationMethod));
             }
 
             return new ChangesToModule(typesToAdd.ToArray(), newMethodBodies.ToArray());

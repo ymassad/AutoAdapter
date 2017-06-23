@@ -9,13 +9,13 @@ using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class AdaptationMethodProcessor : IAdaptationMethodProcessor
+    public class RefTypeToInterfaceAdaptationMethodProcessor : IAdaptationMethodProcessor<RefTypeToInterfaceAdaptationMethod>
     {
         private readonly IAdapterFactory adapterFactory;
         private readonly IAdaptationRequestsFinder adaptationRequestsFinder;
         private readonly IReferenceImporter referenceImporter;
 
-        public AdaptationMethodProcessor(
+        public RefTypeToInterfaceAdaptationMethodProcessor(
             IAdapterFactory adapterFactory,
             IAdaptationRequestsFinder adaptationRequestsFinder,
             IReferenceImporter referenceImporter)
@@ -27,15 +27,17 @@ namespace AutoAdapter.Fody
 
         public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
             ModuleDefinition module,
-            MethodDefinition adaptationMethod)
+            RefTypeToInterfaceAdaptationMethod adaptationMethod)
         {
+            var method = adaptationMethod.Method;
+
             var typesToAdd = new List<TypeDefinition>();
 
             var newBodyInstructions = new List<Instruction>();
 
-            var adaptationRequests = adaptationRequestsFinder.FindRequests(adaptationMethod);
+            var adaptationRequests = adaptationRequestsFinder.FindRequests(method);
 
-            var ilProcessor = adaptationMethod.Body.GetILProcessor();
+            var ilProcessor = method.Body.GetILProcessor();
 
             var getTypeFromHandleMethod = ImportGetTypeFromHandleMethod(module);
 
@@ -48,7 +50,7 @@ namespace AutoAdapter.Fody
 
                 typesToAdd.Add(adapterType);
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[0]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, method.GenericParameters[0]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
@@ -62,7 +64,7 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, adaptationMethod.GenericParameters[1]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, method.GenericParameters[1]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
 
@@ -76,7 +78,7 @@ namespace AutoAdapter.Fody
 
                 if (request.ExtraParametersObjectType.HasValue)
                 {
-                    newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
+                    newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, ImportGetTypeMethod(module) ));
 
@@ -89,22 +91,22 @@ namespace AutoAdapter.Fody
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
                 }
 
-                newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+                newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Box, adaptationMethod.GenericParameters[0]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Box, method.GenericParameters[0]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Castclass, request.SourceType));
 
                 if (request.ExtraParametersObjectType.HasValue)
                 {
-                    newBodyInstructions.Add(ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
+                    newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
 
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue()));
                 }
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[1]));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, method.GenericParameters[1]));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ret));
 

@@ -1,13 +1,14 @@
 using System.Linq;
+using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class StaticMethodAdaptationMethodsFinder : IStaticAdaptationMethodsFinder
+    public class StaticMethodToInterfaceAdaptationMethodsFinder : IAdaptationMethodsFinder<StaticMethodToInterfaceAdaptationMethod>
     {
-        public MethodDefinition[] FindStaticAdaptationMethods(ModuleDefinition moduleDefinition)
+        public StaticMethodToInterfaceAdaptationMethod[] FindAdaptationMethods(ModuleDefinition moduleDefinition)
         {
             return moduleDefinition
                 .GetTypes()
@@ -18,6 +19,7 @@ namespace AutoAdapter.Fody
                 .Where(x => x.Parameters[0].ParameterType.FullName == "System.Type")
                 .Where(x => x.Parameters[1].ParameterType.FullName == "System.String")
                 .Where(x => x.CustomAttributes.Any(a => a.AttributeType.Name == "AdapterMethodAttribute"))
+                .Select(x => new StaticMethodToInterfaceAdaptationMethod(x))
                 .ToArray();
         }
     }

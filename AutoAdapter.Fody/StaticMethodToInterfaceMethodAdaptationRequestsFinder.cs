@@ -8,7 +8,7 @@ using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class StaticMethodAdaptationRequestsFinder : IStaticAdaptationRequestsFinder
+    public class StaticMethodToInterfaceMethodAdaptationRequestsFinder : IStaticAdaptationRequestsFinder
     {
         public StaticMethodAdaptationRequestInstance[] FindRequests(MethodDefinition adaptationMethod)
         {

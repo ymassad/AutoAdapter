@@ -3,10 +3,10 @@ using Mono.Cecil;
 
 namespace AutoAdapter.Fody.Interfaces
 {
-    public interface IAdaptationMethodProcessor
+    public interface IAdaptationMethodProcessor<TAdaptationMethodKind>
     {
         TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
             ModuleDefinition module,
-            MethodDefinition adaptationMethod);
+            TAdaptationMethodKind adaptationMethod);
     }
 }

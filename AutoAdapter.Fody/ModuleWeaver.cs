@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AutoAdapter.Fody.DTOs;
-using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
-using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
@@ -20,38 +18,10 @@ namespace AutoAdapter.Fody
 
         public void Execute()
         {
-            IModuleProcessor moduleProcessor =
-                new ModuleProcessor(
-                    new AdaptationMethodsFinder(),
-                    new AdaptationMethodProcessor(
-                        new AdapterFactory(
-                            new AdapterMethodsCreator( 
-                                new CreatorOfInsturctionsForArgument(),
-                                new SourceAndTargetMethodsMapper()),
-                            new ReferenceImporter()),
-                        new AdaptationRequestsFinder(),
-                        new ReferenceImporter()));
-
-            var staticMethodAdaptationMethodsFinder = new StaticMethodAdaptationMethodsFinder();
-
-            var methods = staticMethodAdaptationMethodsFinder.FindStaticAdaptationMethods(ModuleDefinition);
-
-            var requestsFinder = new StaticMethodAdaptationRequestsFinder();
-
-            StaticMethodAdapterFactory factory = new StaticMethodAdapterFactory(new ReferenceImporter());
-
-            var processor = new StaticAdaptationMethodProcessor(factory, requestsFinder, new ReferenceImporter());
-
-            foreach (var method in methods )
-            {
-                var result =  processor.ProcessStaticAdaptationMethod(ModuleDefinition, method);
-
-                method.Body.Instructions.Clear();
-
-                method.Body.Instructions.AddRange(result.NewBodyForAdaptationMethod);
-
-                ModuleDefinition.Types.AddRange(result.TypesToAdd);
-            }
+            var moduleProcessor =
+                new CompositeModuleProcessor(
+                    CreateModuleProcessorForRefTypeToInterfaceAdaptation(),
+                    CreateModuleProcessorForStaticMethodToInterfaceAdaptation());
 
             var moduleChanges =
                 moduleProcessor
@@ -67,6 +37,29 @@ namespace AutoAdapter.Fody
 
                 ilProcessor.AppendRange(method.NewBody);
             });
+        }
+
+        private ModuleProcessor<StaticMethodToInterfaceAdaptationMethod> CreateModuleProcessorForStaticMethodToInterfaceAdaptation()
+        {
+            return new ModuleProcessor<StaticMethodToInterfaceAdaptationMethod>(
+                new StaticMethodToInterfaceAdaptationMethodsFinder(),
+                new StaticMethodToInterfaceAdaptationMethodProcessor(
+                    new StaticMethodToInterfaceAdapterFactory(new ReferenceImporter()),
+                    new StaticMethodToInterfaceMethodAdaptationRequestsFinder(), new ReferenceImporter()));
+        }
+
+        private ModuleProcessor<RefTypeToInterfaceAdaptationMethod> CreateModuleProcessorForRefTypeToInterfaceAdaptation()
+        {
+            return new ModuleProcessor<RefTypeToInterfaceAdaptationMethod>(
+                new RefTypeToInterfaceAdaptationMethodsFinder(),
+                new RefTypeToInterfaceAdaptationMethodProcessor(
+                    new RefTypeToInterfaceAdapterFactory(
+                        new AdapterMethodsCreator( 
+                            new CreatorOfInsturctionsForArgument(),
+                            new SourceAndTargetMethodsMapper()),
+                        new ReferenceImporter()),
+                    new AdaptationRequestsFinder(),
+                    new ReferenceImporter()));
         }
     }
 }

@@ -13,11 +13,14 @@ namespace AutoAdapter.Fody
 {
     public class StaticMethodToInterfaceAdapterFactory : IStaticMethodAdapterFactory
     {
+        private readonly ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument;
+
         private readonly IReferenceImporter referenceImporter;
 
-        public StaticMethodToInterfaceAdapterFactory(IReferenceImporter referenceImporter)
+        public StaticMethodToInterfaceAdapterFactory(IReferenceImporter referenceImporter, ICreatorOfInsturctionsForArgument creatorOfInsturctionsForArgument)
         {
             this.referenceImporter = referenceImporter;
+            this.creatorOfInsturctionsForArgument = creatorOfInsturctionsForArgument;
         }
 
         public TypeDefinition CreateAdapter(
@@ -48,17 +51,6 @@ namespace AutoAdapter.Fody
 
             var destinationMethod = destinationMethods[0];
 
-            if (sourceMethod.Parameters.Count != destinationMethod.Parameters.Count)
-                throw new Exception("Target method and source method parameter count are different");
-
-            if (!sourceMethod.Parameters
-                .Select(x => x.ParameterType.FullName)
-                .SequenceEqual(
-                    destinationMethod.Parameters.Select(x => x.ParameterType.FullName)))
-            {
-                throw new Exception("Target and source parameter types are different");
-            }
-
             var adapterType = new TypeDefinition(
                 null, "Adapter" + Guid.NewGuid(), TypeAttributes.Public, referenceImporter.ImportObjectType(module));
 
@@ -80,11 +72,28 @@ namespace AutoAdapter.Fody
 
             var ilProcessor = methodOnAdapter.Body.GetILProcessor();
 
-            foreach (var param in destinationMethod.Parameters)
-            {
-                ilProcessor.Emit(OpCodes.Ldarg, param.Index + 1);
-            }
-            
+
+            var targetMethodParametersThatMatchSourceMethodParameters =
+                sourceMethod.Parameters
+                    .Select(x => new SourceAndTargetParameters(x,
+                        destinationMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                    .ToArray();
+
+            targetMethodParametersThatMatchSourceMethodParameters
+                .ToList()
+                .ForEach(parameters =>
+                {
+                    var instructions =
+                        creatorOfInsturctionsForArgument
+                            .CreateInstructionsForArgument(
+                                parameters,
+                                ilProcessor,
+                                request.ExtraParametersObjectType,
+                                Maybe<FieldDefinition>.NoValue());
+
+                    ilProcessor.AppendRange(instructions);
+                });
+
             ilProcessor.Emit(OpCodes.Call, sourceMethod);
 
             ilProcessor.Emit(OpCodes.Ret);

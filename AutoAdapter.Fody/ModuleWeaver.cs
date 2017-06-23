@@ -44,7 +44,9 @@ namespace AutoAdapter.Fody
             return new ModuleProcessor<StaticMethodToInterfaceAdaptationMethod>(
                 new StaticMethodToInterfaceAdaptationMethodsFinder(),
                 new StaticMethodToInterfaceAdaptationMethodProcessor(
-                    new StaticMethodToInterfaceAdapterFactory(new ReferenceImporter()),
+                    new StaticMethodToInterfaceAdapterFactory(
+                        new ReferenceImporter(),
+                        new CreatorOfInsturctionsForArgument()),
                     new StaticMethodToInterfaceMethodAdaptationRequestsFinder(), new ReferenceImporter()));
         }
 

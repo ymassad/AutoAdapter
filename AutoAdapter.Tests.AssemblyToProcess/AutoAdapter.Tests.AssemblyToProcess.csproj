@@ -66,6 +66,7 @@
     <Compile Include="InterfaceToInterfaceTests\StaticCreateMethodTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\BasicInterfaceTest\TestClass.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnTargetInterfaceTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\DifferentParametersOrderTest\TestClass.cs" />
   </ItemGroup>
   <ItemGroup>

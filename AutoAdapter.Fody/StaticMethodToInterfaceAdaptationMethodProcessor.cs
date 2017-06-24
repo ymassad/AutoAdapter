@@ -44,6 +44,10 @@ namespace AutoAdapter.Fody
 
             var stringEqualsMethod = referenceImporter.ImportStringEqualsMethod(module);
 
+            Instruction[] CreateTypeOfInstructions(TypeReference type) =>
+                InstructionUtilities.CreateInstructionsForTypeOfOperator(
+                    type, ilProcessor, getTypeFromHandleMethod);
+
             foreach (var request in adaptationRequests)
             {
                 var adapterType =
@@ -51,13 +55,9 @@ namespace AutoAdapter.Fody
 
                 typesToAdd.Add(adapterType);
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, method.GenericParameters[0]));
+                newBodyInstructions.AddRange(CreateTypeOfInstructions(method.GenericParameters[0]));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
-
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.DestinationType));
-
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
+                newBodyInstructions.AddRange(CreateTypeOfInstructions(request.DestinationType));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
 
@@ -72,9 +72,7 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldarg, staticClassTypeParameterIndex));
 
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.SourceStaticClass));
-
-                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Call, getTypeFromHandleMethod));
+                newBodyInstructions.AddRange(CreateTypeOfInstructions(request.SourceStaticClass));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
 

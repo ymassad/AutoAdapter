@@ -60,6 +60,7 @@
     <Compile Include="DTOs\StaticMethodToInterfaceAdaptationMethod.cs" />
     <Compile Include="ExtraParametersObjectUtilities.cs" />
     <Compile Include="InstructionExtensionMethods.cs" />
+    <Compile Include="InstructionUtilities.cs" />
     <Compile Include="ReferenceImporterExtensionMethods.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodProcessor.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodsFinder.cs" />

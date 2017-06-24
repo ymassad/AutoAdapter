@@ -48,6 +48,11 @@
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\DoubleConstant\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\FloatConstant\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\Int32Constant\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\Int64Constant\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\StringConstant\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\StaticCreateAdapterMethodTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\BasicStaticMethodTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
@@ -70,6 +75,7 @@
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethodTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnTargetInterfaceTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\DifferentParametersOrderTest\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\TwoRequestsThatOverrideTwoDifferentOptionalParametersTest\TestClass.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

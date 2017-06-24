@@ -90,6 +90,16 @@ namespace AutoAdapter.Fody
                 {
                     newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
 
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, referenceImporter.ImportGetTypeMethod(module)));
+
+                    newBodyInstructions.AddRange(CreateTypeOfInstructions(request.ExtraParametersObjectType.GetValue()));
+
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, typeEqualsMethod));
+
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
+
+                    newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+
                     newBodyInstructions.Add(ilProcessor.Create(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue()));
                 }
 

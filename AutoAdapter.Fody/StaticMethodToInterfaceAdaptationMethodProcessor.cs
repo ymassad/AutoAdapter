@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
@@ -68,7 +65,12 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
-                newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+                var staticClassTypeParameterIndex =
+                    (request.ExtraParametersObjectType.HasValue ? 1 : 0) + (method.IsStatic ? 0 : 1);
+                var staticMethodNameParameterIndex =
+                    (request.ExtraParametersObjectType.HasValue ? 2 : 1) + (method.IsStatic ? 0 : 1);
+
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldarg, staticClassTypeParameterIndex));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldtoken, request.SourceStaticClass));
 
@@ -78,13 +80,20 @@ namespace AutoAdapter.Fody
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
 
-                newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_1 : OpCodes.Ldarg_2));
+                newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldarg, staticMethodNameParameterIndex));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Ldstr , request.SourceStaticMethodName));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Callvirt, stringEqualsMethod));
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Brfalse, exitLabel));
+
+                if (request.ExtraParametersObjectType.HasValue)
+                {
+                    newBodyInstructions.Add(ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+
+                    newBodyInstructions.Add(ilProcessor.Create(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue()));
+                }
 
                 newBodyInstructions.Add(ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()));
 

@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
 using Mono.Cecil;
@@ -55,7 +52,12 @@ namespace AutoAdapter.Fody
                 null, "Adapter" + Guid.NewGuid(), TypeAttributes.Public, referenceImporter.ImportObjectType(module));
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
-            
+
+            var extraParametersField =
+                request.ExtraParametersObjectType.Chain(ExtraParametersObjectUtilities.CreateExtraParametersField);
+
+            extraParametersField.ExecuteIfHasValue(field => adapterType.Fields.Add(field));
+
             var methodOnAdapter =
                 new MethodDefinition(
                     destinationMethod.Name,
@@ -89,7 +91,7 @@ namespace AutoAdapter.Fody
                                 parameters,
                                 ilProcessor,
                                 request.ExtraParametersObjectType,
-                                Maybe<FieldDefinition>.NoValue());
+                                extraParametersField);
 
                     ilProcessor.AppendRange(instructions);
                 });
@@ -100,14 +102,14 @@ namespace AutoAdapter.Fody
 
             adapterType.Methods.Add(methodOnAdapter);
 
-            var constructor = CreateConstructor(module);
+            var constructor = CreateConstructor(module, extraParametersField);
 
             adapterType.Methods.Add(constructor);
 
             return adapterType;
         }
 
-        private MethodDefinition CreateConstructor(ModuleDefinition module)
+        private MethodDefinition CreateConstructor(ModuleDefinition module, Maybe<FieldDefinition> extraParametersField)
         {
             var constructor =
                 new MethodDefinition(
@@ -115,10 +117,25 @@ namespace AutoAdapter.Fody
                     MethodAttributes.Public | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName,
                     referenceImporter.ImportVoidType(module));
 
+            extraParametersField.ExecuteIfHasValue(value =>
+            {
+                constructor.Parameters.Add(
+                    new ParameterDefinition("extraParameters",
+                        ParameterAttributes.None,
+                        value.FieldType));
+            });
+
             var processor = constructor.Body.GetILProcessor();
 
             processor.Emit(OpCodes.Ldarg_0);
             processor.Emit(OpCodes.Call, referenceImporter.ImportObjectConstructor(module));
+
+            extraParametersField.ExecuteIfHasValue(value =>
+            {
+                processor.Emit(OpCodes.Ldarg_0);
+                processor.Emit(OpCodes.Ldarg_1);
+                processor.Emit(OpCodes.Stfld, value);
+            });
 
             processor.Emit(OpCodes.Ret);
 

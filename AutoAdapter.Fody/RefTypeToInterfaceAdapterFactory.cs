@@ -32,12 +32,10 @@ namespace AutoAdapter.Fody
 
             adapterType.Fields.Add(adaptedField);
 
-            var extraParametersField = CreateExtraParametersField(request);
+            var extraParametersField =
+                request.ExtraParametersObjectType.Chain(ExtraParametersObjectUtilities.CreateExtraParametersField);
 
-            if (request.ExtraParametersObjectType.HasValue)
-            {
-                adapterType.Fields.Add(extraParametersField.GetValue());
-            }
+            extraParametersField.ExecuteIfHasValue(field => adapterType.Fields.Add(field));
 
             adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
 
@@ -50,16 +48,6 @@ namespace AutoAdapter.Fody
             adapterType.Methods.AddRange(methods);
 
             return adapterType;
-        }
-
-        private Maybe<FieldDefinition> CreateExtraParametersField(AdaptationRequestInstance request)
-        {
-            return request.ExtraParametersObjectType
-                .Chain(value =>
-                    new FieldDefinition(
-                        "extraParameters",
-                        FieldAttributes.InitOnly | FieldAttributes.Private,
-                        value));
         }
 
         private FieldDefinition CreateAdaptedField(AdaptationRequestInstance request)

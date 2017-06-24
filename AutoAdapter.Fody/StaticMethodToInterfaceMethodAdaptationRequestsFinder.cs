@@ -50,11 +50,11 @@ namespace AutoAdapter.Fody
                     throw new Exception("Unexpected instruction index");
 
                 return new StaticMethodAdaptationRequestInstance(
-                    sourceStaticClass: bodyInstructions[instructionIndex - 4].GetTypeTokenLoadedViaLdToken(),
-                    sourceStaticMethodName: bodyInstructions[instructionIndex - 2].GetStringLoadedViaLdStr(),
+                    sourceStaticClass: bodyInstructions[instructionIndex - 3].GetTypeTokenLoadedViaLdToken(),
+                    sourceStaticMethodName: bodyInstructions[instructionIndex - 1].GetStringLoadedViaLdStr(),
                     destinationType: genericInstanceMethod.GenericArguments[0],
                     extraParametersObjectType: Maybe<TypeReference>.OfValue(
-                        bodyInstructions[instructionIndex - 1].GetConstructorFromNewObjInstruction().DeclaringType));
+                        bodyInstructions[instructionIndex - 4].GetConstructorFromNewObjInstruction().DeclaringType));
             }
         }
     }

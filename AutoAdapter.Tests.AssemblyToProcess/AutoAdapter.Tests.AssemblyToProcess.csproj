@@ -49,6 +49,7 @@
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethodAndDifferentParametersOrderTest\TestClass.cs" />
+    <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethod_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\StaticMethodInNonStaticClassTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\DoubleConstant\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\OptionalExtraParameterOnSourceMethodWithConstantDefaultValueTest\FloatConstant\TestClass.cs" />

@@ -43,7 +43,7 @@ namespace AutoAdapter.Fody
 
             adapterType.Methods.Add(constructor);
 
-            var methods = adapterMethodsCreator.CreateMethods(request, adaptedField, extraParametersField);
+            var methods = adapterMethodsCreator.CreateAdapterMethods(request, adaptedField, extraParametersField);
 
             adapterType.Methods.AddRange(methods);
 

@@ -2,14 +2,13 @@
 
 namespace AutoAdapter.Fody.DTOs
 {
-    public class AdaptationMethod
+    public abstract class AdaptationMethod
     {
-        public AdaptationMethod(MethodDefinition method)
+        protected AdaptationMethod(MethodDefinition method)
         {
             Method = method;
         }
 
         public MethodDefinition Method { get; }
-
     }
 }

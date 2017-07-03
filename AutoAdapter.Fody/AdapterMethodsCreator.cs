@@ -20,71 +20,72 @@ namespace AutoAdapter.Fody
             this.sourceAndTargetMethodsMapper = sourceAndTargetMethodsMapper;
         }
 
-        public MethodDefinition[] CreateMethods(
+        public MethodDefinition[] CreateAdapterMethods(
             AdaptationRequestInstance request,
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField)
         {
-            var methods = new List<MethodDefinition>();
-
             var resolvedDestinationType = request.DestinationType.Resolve();
 
             var resolvedSourceType = request.SourceType.Resolve();
 
-            var targetAndSourceMethods =
-                sourceAndTargetMethodsMapper.CreateMap(resolvedDestinationType, resolvedSourceType);
+            return sourceAndTargetMethodsMapper
+                .CreateMap(resolvedDestinationType, resolvedSourceType)
+                .Select(targetAndSourceMethod =>
+                    CreateAdapterMethod(adaptedField, extraParametersField, targetAndSourceMethod))
+                .ToArray();
+        }
 
-            foreach (var targetAndSourceMethod in targetAndSourceMethods)
+        private MethodDefinition CreateAdapterMethod(
+            FieldDefinition adaptedField,
+            Maybe<FieldDefinition> extraParametersField,
+            SourceAndTargetMethods targetAndSourceMethod)
+        {
+            var methodOnAdapter =
+                new MethodDefinition(
+                    targetAndSourceMethod.TargetMethod.Name,
+                    MethodAttributes.Public | MethodAttributes.Virtual,
+                    targetAndSourceMethod.TargetMethod.ReturnType);
+
+            foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
             {
-                var methodOnAdapter =
-                    new MethodDefinition(
-                        targetAndSourceMethod.TargetMethod.Name,
-                        MethodAttributes.Public | MethodAttributes.Virtual,
-                        targetAndSourceMethod.TargetMethod.ReturnType);
+                var paramOnMethodOnAdapter =
+                    new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
 
-                foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
-                {
-                    var paramOnMethodOnAdapter =
-                        new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
-
-                    methodOnAdapter.Parameters.Add(paramOnMethodOnAdapter);
-                }
-
-                var ilProcessor = methodOnAdapter.Body.GetILProcessor();
-
-                ilProcessor.Emit(OpCodes.Ldarg_0);
-
-                ilProcessor.Emit(OpCodes.Ldfld, adaptedField);
-
-                var targetMethodParametersThatMatchSourceMethodParameters =
-                    targetAndSourceMethod.SourceMethod.Parameters
-                        .Select(x => new SourceAndTargetParameters(x,
-                            targetAndSourceMethod.TargetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
-                        .ToArray();
-
-                targetMethodParametersThatMatchSourceMethodParameters
-                    .ToList()
-                    .ForEach(parameters =>
-                    {
-                        var instructions =
-                            creatorOfInsturctionsForArgument
-                                .CreateInstructionsForArgument(
-                                    parameters,
-                                    ilProcessor,
-                                    request.ExtraParametersObjectType,
-                                    extraParametersField);
-
-                        ilProcessor.AppendRange(instructions);
-                    });
-
-                ilProcessor.Emit(OpCodes.Callvirt, targetAndSourceMethod.SourceMethod);
-
-                ilProcessor.Emit(OpCodes.Ret);
-
-                methods.Add(methodOnAdapter);
+                methodOnAdapter.Parameters.Add(paramOnMethodOnAdapter);
             }
 
-            return methods.ToArray();
+            var ilProcessor = methodOnAdapter.Body.GetILProcessor();
+
+            ilProcessor.Emit(OpCodes.Ldarg_0);
+
+            ilProcessor.Emit(OpCodes.Ldfld, adaptedField);
+
+            var targetMethodParametersThatMatchSourceMethodParameters =
+                targetAndSourceMethod.SourceMethod.Parameters
+                    .Select(x => new SourceAndTargetParameters(x,
+                        targetAndSourceMethod.TargetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                    .ToArray();
+
+            targetMethodParametersThatMatchSourceMethodParameters
+                .ToList()
+                .ForEach(parameters =>
+                {
+                    var instructions =
+                        creatorOfInsturctionsForArgument
+                            .CreateInstructionsForArgument(
+                                parameters,
+                                ilProcessor,
+                                extraParametersField);
+
+                    ilProcessor.AppendRange(instructions);
+                });
+
+            ilProcessor.Emit(OpCodes.Callvirt, targetAndSourceMethod.SourceMethod);
+
+            ilProcessor.Emit(OpCodes.Ret);
+
+            return methodOnAdapter;
         }
     }
 }

@@ -13,16 +13,18 @@ namespace AutoAdapter.Fody
         public Instruction[] CreateInstructionsForArgument(
             SourceAndTargetParameters parameters,
             ILProcessor ilProcessor,
-            Maybe<TypeReference> extraParametersObjectType,
             Maybe<FieldDefinition> extraParametersField)
         {
             if (parameters.TargetParameter.HasValue)
                 return CreateInstructionsForArgumentUsingTargetParameter(parameters, ilProcessor);
 
-            if (extraParametersObjectType.HasValue)
+            if (extraParametersField.HasValue)
             {
-                var instructions = CreateInsturctionsForArgumentUsingExtraParametersObject(
-                    parameters, ilProcessor, extraParametersObjectType.GetValue(), extraParametersField);
+                var instructions =
+                    CreateInsturctionsForArgumentUsingExtraParametersObject(
+                        parameters,
+                        ilProcessor,
+                        extraParametersField.GetValue());
 
                 if (instructions.HasValue)
                     return instructions.GetValue();
@@ -97,16 +99,15 @@ namespace AutoAdapter.Fody
         public Maybe<Instruction[]> CreateInsturctionsForArgumentUsingExtraParametersObject(
             SourceAndTargetParameters parameters,
             ILProcessor ilProcessor,
-            TypeReference extraParametersObjectType,
-            Maybe<FieldDefinition> extraParametersField)
+            FieldDefinition extraParametersField)
         {
-            var resolvedExtraParametersObjectType = extraParametersObjectType.Resolve();
+            var resolvedExtraParametersObjectType = extraParametersField.FieldType.Resolve();
 
             var instructions = new List<Instruction>();
 
             instructions.Add(ilProcessor.Create(OpCodes.Ldarg_0));
 
-            instructions.Add(ilProcessor.Create(OpCodes.Ldfld, extraParametersField.GetValue()));
+            instructions.Add(ilProcessor.Create(OpCodes.Ldfld, extraParametersField));
 
             var propertyOnExtraParametersObject =
                 resolvedExtraParametersObjectType.Properties
@@ -123,7 +124,7 @@ namespace AutoAdapter.Fody
                 new MethodReference(
                         propertyGetMethod.Name,
                         propertyReturnType,
-                        extraParametersObjectType)
+                        extraParametersField.FieldType)
                     { HasThis = true };
 
             instructions.Add(ilProcessor.Create(OpCodes.Callvirt, propertyGetMethodReference));

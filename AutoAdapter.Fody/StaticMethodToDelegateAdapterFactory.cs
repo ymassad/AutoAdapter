@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
@@ -7,13 +7,13 @@ using Mono.Cecil.Rocks;
 
 namespace AutoAdapter.Fody
 {
-    public class StaticMethodToInterfaceAdapterFactory : IStaticMethodToInterfaceAdapterFactory<StaticMethodToInterfaceAdaptationRequest>
+    public class StaticMethodToDelegateAdapterFactory : IStaticMethodToInterfaceAdapterFactory<StaticMethodToDelegateAdaptationRequest>
     {
         private readonly IMembersCreatorForAdapterThatAdaptsFromStaticMethod membersCreator;
 
         private readonly IReferenceImporter referenceImporter;
 
-        public StaticMethodToInterfaceAdapterFactory(
+        public StaticMethodToDelegateAdapterFactory(
             IMembersCreatorForAdapterThatAdaptsFromStaticMethod membersCreator,
             IReferenceImporter referenceImporter)
         {
@@ -23,19 +23,16 @@ namespace AutoAdapter.Fody
 
         public TypeDefinition CreateAdapter(
             ModuleDefinition module,
-            StaticMethodToInterfaceAdaptationRequest request)
+            StaticMethodToDelegateAdaptationRequest request)
         {
             var resolvedDestinationType = request.DestinationType.Resolve();
 
-            if (!resolvedDestinationType.IsInterface)
-                throw new Exception("The destination type must be an interface");
+            if (!TypeUtilities.IsDelegateType(resolvedDestinationType))
+                throw new Exception("The destination type must be delegate");
 
             var destinationMethods = resolvedDestinationType.GetMethods().ToArray();
-            
-            if(destinationMethods.Length != 1)
-                throw new Exception("Target interface should contain only one method");
 
-            var destinationMethod = destinationMethods[0];
+            var destinationMethod = destinationMethods.Single(x => x.Name == "Invoke");
 
             var resolvedSourceClass = request.SourceStaticClass.Resolve();
 
@@ -44,7 +41,7 @@ namespace AutoAdapter.Fody
             var sourceMethodsWithRequestedName = sourceClassMethods
                 .Where(x => x.Name.Equals(request.SourceStaticMethodName)).ToArray();
 
-            if(sourceMethodsWithRequestedName.Length == 0)
+            if (sourceMethodsWithRequestedName.Length == 0)
                 throw new Exception("Could not find requested method in source static class");
 
             var sourceMethod = sourceMethodsWithRequestedName.First();
@@ -61,8 +58,6 @@ namespace AutoAdapter.Fody
             adapterType.Methods.AddRange(membersToAdd.MethodsToAdd);
 
             adapterType.Fields.AddRange(membersToAdd.FieldsToAdd);
-
-            adapterType.Interfaces.Add(new InterfaceImplementation(request.DestinationType));
 
             return adapterType;
         }

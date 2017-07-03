@@ -27,5 +27,14 @@ namespace AutoAdapter.Fody
         {
             return enumerable.Where(predicate).FirstOrNoValue();
         }
+
+        public static IEnumerable<T> GetValues<T>(this IEnumerable<Maybe<T>> enumerable)
+        {
+            foreach (var item in enumerable)
+            {
+                if (item.HasValue)
+                    yield return item.GetValue();
+            }
+        }
     }
 }

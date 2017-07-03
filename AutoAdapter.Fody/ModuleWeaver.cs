@@ -39,15 +39,25 @@ namespace AutoAdapter.Fody
             });
         }
 
-        private ModuleProcessor<StaticMethodToInterfaceAdaptationMethod> CreateModuleProcessorForStaticMethodToInterfaceAdaptation()
+        private ModuleProcessor<StaticMethodAdaptationMethod> CreateModuleProcessorForStaticMethodToInterfaceAdaptation()
         {
-            return new ModuleProcessor<StaticMethodToInterfaceAdaptationMethod>(
-                new StaticMethodToInterfaceAdaptationMethodsFinder(),
-                new StaticMethodToInterfaceAdaptationMethodProcessor(
+            var membersCreatorForAdapterThatAdaptsFromStaticMethod =
+                new MembersCreatorForAdapterThatAdaptsFromStaticMethod(
+                    new CreatorOfInsturctionsForArgument(),
+                    new ReferenceImporter());
+
+            return new ModuleProcessor<StaticMethodAdaptationMethod>(
+                new StaticMethodAdaptationMethodsFinder(),
+                new StaticMethodAdaptationMethodProcessor(
                     new StaticMethodToInterfaceAdapterFactory(
-                        new ReferenceImporter(),
-                        new CreatorOfInsturctionsForArgument()),
-                    new StaticMethodToInterfaceMethodAdaptationRequestsFinder(), new ReferenceImporter()));
+                        membersCreatorForAdapterThatAdaptsFromStaticMethod, 
+                        new ReferenceImporter()),
+                    new StaticMethodMethodAdaptationRequestsFinder<StaticMethodToInterfaceAdaptationRequest>(),
+                    new StaticMethodToDelegateAdapterFactory(
+                        membersCreatorForAdapterThatAdaptsFromStaticMethod,
+                        new ReferenceImporter()),
+                    new StaticMethodMethodAdaptationRequestsFinder<StaticMethodToDelegateAdaptationRequest>(),
+                    new ReferenceImporter()));
         }
 
         private ModuleProcessor<RefTypeToInterfaceAdaptationMethod> CreateModuleProcessorForRefTypeToInterfaceAdaptation()

@@ -56,7 +56,7 @@ namespace AutoAdapter.Fody
 
             var ilProcessor = method.Body.GetILProcessor();
 
-            var toInterfaceAdaptationResult = ProcessToInterfaceAdaptationRequests(module, ilProcessor, method);
+            var toInterfaceAdaptationResult = ProcessAdaptationRequests(module, ilProcessor, method);
 
             var newBody = new List<Instruction>();
 
@@ -73,10 +73,10 @@ namespace AutoAdapter.Fody
             return new TypesToAddToModuleAndNewBodyForAdaptation(toInterfaceAdaptationResult.NewTypes, newBody.ToArray());
         }
 
-        private NewTypesAndNewInstructionsToAdd ProcessToInterfaceAdaptationRequests(
+        private NewTypesAndNewInstructionsToAdd ProcessAdaptationRequests(
             ModuleDefinition module,
             ILProcessor ilProcessor,
-            MethodDefinition method)
+            MethodDefinition adaptationMethod)
         {
             var getTypeFromHandleMethod = referenceImporter.ImportGetTypeFromHandleMethod(module);
 
@@ -88,11 +88,17 @@ namespace AutoAdapter.Fody
 
             var instructions = new List<Instruction>();
 
-            var toInterfaceAdaptationRequests = toInterfaceAdaptationRequestsFinder.FindRequests(method);
+            var toInterfaceAdaptationRequests = toInterfaceAdaptationRequestsFinder.FindRequests(adaptationMethod);
 
-            var toDelegateAdaptationRequests = toDelegateAdaptationRequestsFinder.FindRequests(method);
+            var toDelegateAdaptationRequests = toDelegateAdaptationRequestsFinder.FindRequests(adaptationMethod);
 
-            foreach (var request in toInterfaceAdaptationRequests.Cast<StaticMethodAdaptationRequest>().Concat(toDelegateAdaptationRequests))
+            var allAdaptationRequests =
+                toInterfaceAdaptationRequests
+                    .Cast<StaticMethodAdaptationRequest>()
+                    .Concat(toDelegateAdaptationRequests)
+                    .ToList();
+
+            foreach (var request in allAdaptationRequests)
             {
                 var adapterType = CreateAdapter(module, request);
 
@@ -103,7 +109,7 @@ namespace AutoAdapter.Fody
                 instructions.AddRange(
                     CreateInstructionsToCheckDestinationType(
                         ilProcessor,
-                        method,
+                        adaptationMethod,
                         getTypeFromHandleMethod,
                         typeEqualsMethod,
                         exitLabel,
@@ -112,7 +118,7 @@ namespace AutoAdapter.Fody
                 instructions.AddRange(
                     CreateInstructionstoCheckSourceStaticClass(
                         ilProcessor,
-                        method,
+                        adaptationMethod,
                         request,
                         getTypeFromHandleMethod,
                         typeEqualsMethod,
@@ -121,7 +127,7 @@ namespace AutoAdapter.Fody
                 instructions.AddRange(
                     CreateInstructionsToCheckSourceMethodName(
                         ilProcessor,
-                        method,
+                        adaptationMethod,
                         request,
                         stringEqualsMethod,
                         exitLabel));
@@ -130,17 +136,17 @@ namespace AutoAdapter.Fody
                     CreateInstructionsToCheckExtraParametersObjectType(
                         module,
                         ilProcessor,
-                        method,
+                        adaptationMethod,
                         request,
                         getTypeFromHandleMethod,
                         typeEqualsMethod,
                         exitLabel));
 
-                instructions.AddRange(CreateInstructionsToLoadExtraParametersObjectArgument(ilProcessor, method, request));
+                instructions.AddRange(CreateInstructionsToLoadExtraParametersObjectArgument(ilProcessor, adaptationMethod, request));
 
                 if (request is StaticMethodToInterfaceAdaptationRequest)
                 {
-                    instructions.AddRange(CreateInstructionsToCreateAdapterObject(ilProcessor, method, adapterType));
+                    instructions.AddRange(CreateInstructionsToCreateAdapterObject(ilProcessor, adaptationMethod, adapterType));
                 }
                 else
                 {
@@ -160,7 +166,7 @@ namespace AutoAdapter.Fody
 
                     instructions.Add(ilProcessor.Create(OpCodes.Call, createDelegateMethod));
 
-                    instructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, method.GenericParameters[0]));
+                    instructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[0]));
                 }
 
                 instructions.Add(ilProcessor.Create(OpCodes.Ret));
@@ -173,13 +179,13 @@ namespace AutoAdapter.Fody
 
         private static List<Instruction> CreateInstructionsToCreateAdapterObject(
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             TypeDefinition adapterType)
         {
             return new List<Instruction>
             {
                 ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()),
-                ilProcessor.Create(OpCodes.Unbox_Any, method.GenericParameters[0])
+                ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[0])
             };
         }
 
@@ -200,7 +206,7 @@ namespace AutoAdapter.Fody
 
         private static List<Instruction> CreateInstructionsToLoadExtraParametersObjectArgument(
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             StaticMethodAdaptationRequest request)
         {
             var instructions = new List<Instruction>();
@@ -208,7 +214,7 @@ namespace AutoAdapter.Fody
             if (request.ExtraParametersObjectType.HasValue)
             {
                 instructions.Add(
-                    ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+                    ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
 
                 instructions.Add(
                     ilProcessor.Create(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue()));
@@ -219,7 +225,7 @@ namespace AutoAdapter.Fody
         private List<Instruction> CreateInstructionsToCheckExtraParametersObjectType(
             ModuleDefinition module,
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             StaticMethodAdaptationRequest request,
             MethodReference getTypeFromHandleMethod,
             MethodReference typeEqualsMethod,
@@ -230,7 +236,7 @@ namespace AutoAdapter.Fody
             if (request.ExtraParametersObjectType.HasValue)
             {
                 instructions.Add(
-                    ilProcessor.Create(method.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
+                    ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
 
                 instructions.Add(
                     ilProcessor.Create(OpCodes.Callvirt, referenceImporter.ImportGetTypeMethod(module)));
@@ -249,7 +255,7 @@ namespace AutoAdapter.Fody
 
         private static List<Instruction> CreateInstructionsToCheckSourceMethodName(
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             StaticMethodAdaptationRequest request,
             MethodReference stringEqualsMethod,
             Instruction exitLabel)
@@ -257,7 +263,7 @@ namespace AutoAdapter.Fody
             var instructions = new List<Instruction>();
 
             var staticMethodNameParameterIndex =
-                (request.ExtraParametersObjectType.HasValue ? 2 : 1) + (method.IsStatic ? 0 : 1);
+                (request.ExtraParametersObjectType.HasValue ? 2 : 1) + (adaptationMethod.IsStatic ? 0 : 1);
 
             instructions.Add(ilProcessor.Create(OpCodes.Ldarg, staticMethodNameParameterIndex));
 
@@ -272,14 +278,14 @@ namespace AutoAdapter.Fody
 
         private static List<Instruction> CreateInstructionstoCheckSourceStaticClass(
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             StaticMethodAdaptationRequest request,
             MethodReference getTypeFromHandleMethod,
             MethodReference typeEqualsMethod,
             Instruction exitLabel)
         {
             var staticClassTypeParameterIndex =
-                (request.ExtraParametersObjectType.HasValue ? 1 : 0) + (method.IsStatic ? 0 : 1);
+                (request.ExtraParametersObjectType.HasValue ? 1 : 0) + (adaptationMethod.IsStatic ? 0 : 1);
 
             var instructions = new List<Instruction>();
 
@@ -297,7 +303,7 @@ namespace AutoAdapter.Fody
 
         private static List<Instruction> CreateInstructionsToCheckDestinationType(
             ILProcessor ilProcessor,
-            MethodDefinition method,
+            MethodDefinition adaptationMethod,
             MethodReference getTypeFromHandleMethod,
             MethodReference typeEqualsMethod,
             Instruction exitLabel,
@@ -307,7 +313,7 @@ namespace AutoAdapter.Fody
 
             instructions.AddRange(
                 InstructionUtilities.CreateInstructionsForTypeOfOperator(
-                    method.GenericParameters[0],
+                    adaptationMethod.GenericParameters[0],
                     ilProcessor,
                     getTypeFromHandleMethod));
 

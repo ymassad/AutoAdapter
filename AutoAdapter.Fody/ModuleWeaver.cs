@@ -21,7 +21,7 @@ namespace AutoAdapter.Fody
             var moduleProcessor =
                 new CompositeModuleProcessor(
                     CreateModuleProcessorForRefTypeToInterfaceAdaptation(),
-                    CreateModuleProcessorForStaticMethodToInterfaceAdaptation());
+                    CreateModuleProcessorForStaticMethodAdaptation());
 
             var moduleChanges =
                 moduleProcessor
@@ -39,7 +39,7 @@ namespace AutoAdapter.Fody
             });
         }
 
-        private ModuleProcessor<StaticMethodAdaptationMethod> CreateModuleProcessorForStaticMethodToInterfaceAdaptation()
+        private ModuleProcessor<StaticMethodAdaptationMethod> CreateModuleProcessorForStaticMethodAdaptation()
         {
             var membersCreatorForAdapterThatAdaptsFromStaticMethod =
                 new MembersCreatorForAdapterThatAdaptsFromStaticMethod(

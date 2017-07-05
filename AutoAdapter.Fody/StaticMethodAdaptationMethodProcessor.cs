@@ -146,13 +146,19 @@ namespace AutoAdapter.Fody
 
                 if (request is StaticMethodToInterfaceAdaptationRequest)
                 {
-                    instructions.AddRange(CreateInstructionsToCreateAdapterObject(ilProcessor, adaptationMethod, adapterType));
+                    instructions.Add(ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()));
+                    instructions.Add(ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[0]));
                 }
-                else
+                else //StaticMethodToDelegate
                 {
-                    var createDelegateMethod = referenceImporter.ImportMethodReference(module,
-                        typeof(Delegate).GetMethod("CreateDelegate",
-                            new[] { typeof(Type), typeof(object), typeof(string) }));
+                    var createDelegateMethod =
+                        referenceImporter
+                            .ImportMethodReference(
+                            module,
+                            typeof(Delegate)
+                                .GetMethod(
+                                "CreateDelegate",
+                                new[] { typeof(Type), typeof(object), typeof(string) }));
 
                     instructions.AddRange(
                         InstructionUtilities.CreateInstructionsForTypeOfOperator(
@@ -177,18 +183,6 @@ namespace AutoAdapter.Fody
             return new NewTypesAndNewInstructionsToAdd(typesToAdd.ToArray(), instructions.ToArray());
         }
 
-        private static List<Instruction> CreateInstructionsToCreateAdapterObject(
-            ILProcessor ilProcessor,
-            MethodDefinition adaptationMethod,
-            TypeDefinition adapterType)
-        {
-            return new List<Instruction>
-            {
-                ilProcessor.Create(OpCodes.Newobj, adapterType.GetConstructors().First()),
-                ilProcessor.Create(OpCodes.Unbox_Any, adaptationMethod.GenericParameters[0])
-            };
-        }
-
         private TypeDefinition CreateAdapter(ModuleDefinition module, StaticMethodAdaptationRequest request)
         {
             if (request is StaticMethodToInterfaceAdaptationRequest toInterfaceRequest)
@@ -204,22 +198,18 @@ namespace AutoAdapter.Fody
             throw new Exception("Impossible");
         }
 
-        private static List<Instruction> CreateInstructionsToLoadExtraParametersObjectArgument(
+        private static Instruction[] CreateInstructionsToLoadExtraParametersObjectArgument(
             ILProcessor ilProcessor,
             MethodDefinition adaptationMethod,
             StaticMethodAdaptationRequest request)
         {
-            var instructions = new List<Instruction>();
-
-            if (request.ExtraParametersObjectType.HasValue)
-            {
-                instructions.Add(
-                    ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1));
-
-                instructions.Add(
-                    ilProcessor.Create(OpCodes.Castclass, request.ExtraParametersObjectType.GetValue()));
-            }
-            return instructions;
+            return request.ExtraParametersObjectType
+                .Chain(type => new[]
+                    {
+                        ilProcessor.Create(adaptationMethod.IsStatic ? OpCodes.Ldarg_0 : OpCodes.Ldarg_1),
+                        ilProcessor.Create(OpCodes.Castclass, type)
+                    })
+                .GetValueOr(() => new Instruction[0]);
         }
 
         private List<Instruction> CreateInstructionsToCheckExtraParametersObjectType(

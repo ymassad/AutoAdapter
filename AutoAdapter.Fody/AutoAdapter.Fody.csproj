@@ -70,7 +70,7 @@
     <Compile Include="ReferenceImporterExtensionMethods.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodProcessor.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodsFinder.cs" />
-    <Compile Include="AdaptationRequestsFinder.cs" />
+    <Compile Include="RefTypeToInterfaceAdaptationRequestsFinder.cs" />
     <Compile Include="RefTypeToInterfaceAdapterFactory.cs" />
     <Compile Include="AdapterMethodsCreator.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
@@ -84,7 +84,7 @@
     <Compile Include="ILProcessorExtensionMethods.cs" />
     <Compile Include="Interfaces\IAdaptationMethodProcessor.cs" />
     <Compile Include="Interfaces\IAdaptationMethodsFinder.cs" />
-    <Compile Include="Interfaces\IAdaptationRequestsFinder.cs" />
+    <Compile Include="Interfaces\IRefTypeToInterfaceAdaptationRequestsFinder.cs" />
     <Compile Include="Interfaces\IAdapterFactory.cs" />
     <Compile Include="Interfaces\IAdapterMethodsCreator.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />

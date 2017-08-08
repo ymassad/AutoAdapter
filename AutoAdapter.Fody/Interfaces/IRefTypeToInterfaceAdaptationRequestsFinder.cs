@@ -3,7 +3,7 @@ using Mono.Cecil;
 
 namespace AutoAdapter.Fody.Interfaces
 {
-    public interface IAdaptationRequestsFinder
+    public interface IRefTypeToInterfaceAdaptationRequestsFinder
     {
         RefTypeToInterfaceAdaptationRequest[] FindRequests(MethodDefinition adaptationMethod);
     }

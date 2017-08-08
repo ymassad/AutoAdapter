@@ -11,16 +11,16 @@ namespace AutoAdapter.Fody
     public class RefTypeToInterfaceAdaptationMethodProcessor : IAdaptationMethodProcessor<RefTypeToInterfaceAdaptationMethod>
     {
         private readonly IAdapterFactory adapterFactory;
-        private readonly IAdaptationRequestsFinder adaptationRequestsFinder;
+        private readonly IRefTypeToInterfaceAdaptationRequestsFinder refTypeToInterfaceAdaptationRequestsFinder;
         private readonly IReferenceImporter referenceImporter;
 
         public RefTypeToInterfaceAdaptationMethodProcessor(
             IAdapterFactory adapterFactory,
-            IAdaptationRequestsFinder adaptationRequestsFinder,
+            IRefTypeToInterfaceAdaptationRequestsFinder refTypeToInterfaceAdaptationRequestsFinder,
             IReferenceImporter referenceImporter)
         {
             this.adapterFactory = adapterFactory;
-            this.adaptationRequestsFinder = adaptationRequestsFinder;
+            this.refTypeToInterfaceAdaptationRequestsFinder = refTypeToInterfaceAdaptationRequestsFinder;
             this.referenceImporter = referenceImporter;
         }
 
@@ -34,7 +34,7 @@ namespace AutoAdapter.Fody
 
             var newBodyInstructions = new List<Instruction>();
 
-            var adaptationRequests = adaptationRequestsFinder.FindRequests(method);
+            var adaptationRequests = refTypeToInterfaceAdaptationRequestsFinder.FindRequests(method);
 
             var ilProcessor = method.Body.GetILProcessor();
 

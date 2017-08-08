@@ -70,7 +70,7 @@ namespace AutoAdapter.Fody
                             new CreatorOfInsturctionsForArgument(),
                             new SourceAndTargetMethodsMapper()),
                         new ReferenceImporter()),
-                    new AdaptationRequestsFinder(),
+                    new RefTypeToInterfaceAdaptationRequestsFinder(),
                     new ReferenceImporter()));
         }
     }

@@ -3,9 +3,9 @@ using Mono.Cecil.Cil;
 
 namespace AutoAdapter.Fody.DTOs
 {
-    public class TypesToAddToModuleAndNewBodyForAdaptation
+    public class TypesToAddToModuleAndNewBodyForAdaptationMethod
     {
-        public TypesToAddToModuleAndNewBodyForAdaptation(TypeDefinition[] typesToAdd, Instruction[] newBodyForAdaptationMethod)
+        public TypesToAddToModuleAndNewBodyForAdaptationMethod(TypeDefinition[] typesToAdd, Instruction[] newBodyForAdaptationMethod)
         {
             TypesToAdd = typesToAdd;
             NewBodyForAdaptationMethod = newBodyForAdaptationMethod;

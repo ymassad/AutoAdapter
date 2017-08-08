@@ -24,7 +24,7 @@ namespace AutoAdapter.Fody
             this.referenceImporter = referenceImporter;
         }
 
-        public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
+        public TypesToAddToModuleAndNewBodyForAdaptationMethod ProcessAdaptationMethod(
             ModuleDefinition module,
             RefTypeToInterfaceAdaptationMethod adaptationMethod)
         {
@@ -114,7 +114,7 @@ namespace AutoAdapter.Fody
 
             newBodyInstructions.Add(ilProcessor.Create(OpCodes.Throw));
 
-            return new TypesToAddToModuleAndNewBodyForAdaptation(typesToAdd.ToArray(), newBodyInstructions.ToArray());
+            return new TypesToAddToModuleAndNewBodyForAdaptationMethod(typesToAdd.ToArray(), newBodyInstructions.ToArray());
         }
     }
 }

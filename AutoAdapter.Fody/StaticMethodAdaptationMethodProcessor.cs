@@ -48,7 +48,7 @@ namespace AutoAdapter.Fody
             public Instruction[] NewInstructions { get; }
         }
 
-        public TypesToAddToModuleAndNewBodyForAdaptation ProcessAdaptationMethod(
+        public TypesToAddToModuleAndNewBodyForAdaptationMethod ProcessAdaptationMethod(
             ModuleDefinition module,
             StaticMethodAdaptationMethod adaptationMethod)
         {
@@ -70,7 +70,7 @@ namespace AutoAdapter.Fody
 
             newBody.Add(ilProcessor.Create(OpCodes.Throw));
 
-            return new TypesToAddToModuleAndNewBodyForAdaptation(toInterfaceAdaptationResult.NewTypes, newBody.ToArray());
+            return new TypesToAddToModuleAndNewBodyForAdaptationMethod(toInterfaceAdaptationResult.NewTypes, newBody.ToArray());
         }
 
         private NewTypesAndNewInstructionsToAdd ProcessAdaptationRequests(

@@ -21,7 +21,7 @@ namespace AutoAdapter.Fody
         }
 
         public MethodDefinition[] CreateAdapterMethods(
-            AdaptationRequestInstance request,
+            RefTypeToInterfaceAdaptationRequest request,
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField)
         {

@@ -2,9 +2,9 @@ using Mono.Cecil;
 
 namespace AutoAdapter.Fody.DTOs
 {
-    public class AdaptationRequestInstance
+    public class RefTypeToInterfaceAdaptationRequest
     {
-        public AdaptationRequestInstance(
+        public RefTypeToInterfaceAdaptationRequest(
             TypeReference sourceType, TypeReference destinationType, Maybe<TypeReference> extraParametersObjectType)
         {
             SourceType = sourceType;
@@ -12,7 +12,7 @@ namespace AutoAdapter.Fody.DTOs
             ExtraParametersObjectType = extraParametersObjectType;
         }
 
-        public AdaptationRequestInstance(TypeReference sourceType, TypeReference destinationType)
+        public RefTypeToInterfaceAdaptationRequest(TypeReference sourceType, TypeReference destinationType)
             : this(sourceType, destinationType, Maybe<TypeReference>.NoValue())
         {
         }

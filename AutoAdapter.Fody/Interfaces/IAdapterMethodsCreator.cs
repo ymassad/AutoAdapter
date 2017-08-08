@@ -6,7 +6,7 @@ namespace AutoAdapter.Fody.Interfaces
     public interface IAdapterMethodsCreator
     {
         MethodDefinition[] CreateAdapterMethods(
-            AdaptationRequestInstance request,
+            RefTypeToInterfaceAdaptationRequest request,
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField);
     }

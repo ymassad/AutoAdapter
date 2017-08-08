@@ -10,7 +10,7 @@ namespace AutoAdapter.Fody
 {
     public class AdaptationRequestsFinder : IAdaptationRequestsFinder
     {
-        public AdaptationRequestInstance[] FindRequests(MethodDefinition adaptationMethod)
+        public RefTypeToInterfaceAdaptationRequest[] FindRequests(MethodDefinition adaptationMethod)
         {
             return adaptationMethod
                 .Module
@@ -25,7 +25,7 @@ namespace AutoAdapter.Fody
                 .ToArray();
         }
 
-        private AdaptationRequestInstance CreateAdaptationRequestForInstruction(
+        private RefTypeToInterfaceAdaptationRequest CreateAdaptationRequestForInstruction(
             MethodDefinition methodToSearch,
             int instructionIndex)
         {
@@ -37,7 +37,7 @@ namespace AutoAdapter.Fody
 
             if (genericInstanceMethod.Parameters.Count == 1)
             {
-                return new AdaptationRequestInstance(
+                return new RefTypeToInterfaceAdaptationRequest(
                     genericInstanceMethod.GenericArguments[0],
                     genericInstanceMethod.GenericArguments[1]);
             }
@@ -50,7 +50,7 @@ namespace AutoAdapter.Fody
 
                 MethodReference constructor = (MethodReference)previousInstruction.Operand;
 
-                return new AdaptationRequestInstance(
+                return new RefTypeToInterfaceAdaptationRequest(
                     genericInstanceMethod.GenericArguments[0],
                     genericInstanceMethod.GenericArguments[1],
                     Maybe<TypeReference>.OfValue(constructor.DeclaringType));

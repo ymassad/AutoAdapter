@@ -75,7 +75,7 @@
     <Compile Include="AdapterMethodsCreator.cs" />
     <Compile Include="CollectionExtensionMethods.cs" />
     <Compile Include="CreatorOfInsturctionsForArgument.cs" />
-    <Compile Include="DTOs\AdaptationRequestInstance.cs" />
+    <Compile Include="DTOs\RefTypeToInterfaceAdaptationRequest.cs" />
     <Compile Include="DTOs\ChangesToModule.cs" />
     <Compile Include="DTOs\NewBodyForMethod.cs" />
     <Compile Include="DTOs\RefTypeToInterfaceAdaptationMethod.cs" />

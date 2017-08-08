@@ -5,6 +5,6 @@ namespace AutoAdapter.Fody.Interfaces
 {
     public interface IAdapterFactory
     {
-        TypeDefinition CreateAdapter(ModuleDefinition module, AdaptationRequestInstance request);
+        TypeDefinition CreateAdapter(ModuleDefinition module, RefTypeToInterfaceAdaptationRequest request);
     }
 }

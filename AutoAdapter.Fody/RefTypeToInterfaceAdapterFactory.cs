@@ -21,7 +21,7 @@ namespace AutoAdapter.Fody
             this.referenceImporter = referenceImporter;
         }
 
-        public TypeDefinition CreateAdapter(ModuleDefinition module, AdaptationRequestInstance request)
+        public TypeDefinition CreateAdapter(ModuleDefinition module, RefTypeToInterfaceAdaptationRequest request)
         {
             if (!request.DestinationType.Resolve().IsInterface)
                 throw new Exception("The destination type must be an interface");
@@ -50,7 +50,7 @@ namespace AutoAdapter.Fody
             return adapterType;
         }
 
-        private FieldDefinition CreateAdaptedField(AdaptationRequestInstance request)
+        private FieldDefinition CreateAdaptedField(RefTypeToInterfaceAdaptationRequest request)
         {
             return new FieldDefinition(
                 "adapted",

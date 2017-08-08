@@ -3,7 +3,7 @@ using Mono.Cecil;
 
 namespace AutoAdapter.Fody.Interfaces
 {
-    public interface IAdapterFactory
+    public interface IRefTypeToInterfaceAdapterFactory
     {
         TypeDefinition CreateAdapter(ModuleDefinition module, RefTypeToInterfaceAdaptationRequest request);
     }

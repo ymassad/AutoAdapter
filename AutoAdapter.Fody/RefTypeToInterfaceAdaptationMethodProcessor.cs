@@ -10,16 +10,16 @@ namespace AutoAdapter.Fody
 {
     public class RefTypeToInterfaceAdaptationMethodProcessor : IAdaptationMethodProcessor<RefTypeToInterfaceAdaptationMethod>
     {
-        private readonly IAdapterFactory adapterFactory;
+        private readonly IRefTypeToInterfaceAdapterFactory refTypeToInterfaceAdapterFactory;
         private readonly IRefTypeToInterfaceAdaptationRequestsFinder refTypeToInterfaceAdaptationRequestsFinder;
         private readonly IReferenceImporter referenceImporter;
 
         public RefTypeToInterfaceAdaptationMethodProcessor(
-            IAdapterFactory adapterFactory,
+            IRefTypeToInterfaceAdapterFactory refTypeToInterfaceAdapterFactory,
             IRefTypeToInterfaceAdaptationRequestsFinder refTypeToInterfaceAdaptationRequestsFinder,
             IReferenceImporter referenceImporter)
         {
-            this.adapterFactory = adapterFactory;
+            this.refTypeToInterfaceAdapterFactory = refTypeToInterfaceAdapterFactory;
             this.refTypeToInterfaceAdaptationRequestsFinder = refTypeToInterfaceAdaptationRequestsFinder;
             this.referenceImporter = referenceImporter;
         }
@@ -49,7 +49,7 @@ namespace AutoAdapter.Fody
             foreach (var request in adaptationRequests)
             {
                 var adapterType =
-                    adapterFactory.CreateAdapter(module, request);
+                    refTypeToInterfaceAdapterFactory.CreateAdapter(module, request);
 
                 typesToAdd.Add(adapterType);
 

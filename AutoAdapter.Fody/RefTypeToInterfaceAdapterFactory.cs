@@ -10,7 +10,7 @@ using TypeAttributes = Mono.Cecil.TypeAttributes;
 
 namespace AutoAdapter.Fody
 {
-    public class RefTypeToInterfaceAdapterFactory : IAdapterFactory
+    public class RefTypeToInterfaceAdapterFactory : IRefTypeToInterfaceAdapterFactory
     {
         private readonly IAdapterMethodsCreator adapterMethodsCreator;
         private readonly IReferenceImporter referenceImporter;

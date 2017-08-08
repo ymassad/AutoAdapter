@@ -85,7 +85,7 @@
     <Compile Include="Interfaces\IAdaptationMethodProcessor.cs" />
     <Compile Include="Interfaces\IAdaptationMethodsFinder.cs" />
     <Compile Include="Interfaces\IRefTypeToInterfaceAdaptationRequestsFinder.cs" />
-    <Compile Include="Interfaces\IAdapterFactory.cs" />
+    <Compile Include="Interfaces\IRefTypeToInterfaceAdapterFactory.cs" />
     <Compile Include="Interfaces\IAdapterMethodsCreator.cs" />
     <Compile Include="Interfaces\ICreatorOfInsturctionsForArgument.cs" />
     <Compile Include="Interfaces\IModuleProcessor.cs" />

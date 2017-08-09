@@ -7,10 +7,12 @@ namespace AutoAdapter.Fody
 {
     public class SourceAndTargetMethodsMapper : ISourceAndTargetMethodsMapper
     {
-        public SourceAndTargetMethods[] CreateMap(
-            TypeDefinition resolvedDestinationType,
-            TypeDefinition resolvedSourceType)
+        public SourceAndTargetMethods[] CreateMap(TypeReference destinationType, TypeReference sourceType)
         {
+            var resolvedDestinationType = destinationType.Resolve();
+
+            var resolvedSourceType = sourceType.Resolve();
+
             var sourceMethods =
                 resolvedSourceType.Methods
                     .Where(x => x.IsPublic)
@@ -20,14 +22,14 @@ namespace AutoAdapter.Fody
 
             if (sourceMethods.Length == 1 && resolvedDestinationType.Methods.Count == 1)
             {
-                return new[] {new SourceAndTargetMethods(resolvedDestinationType.Methods[0], sourceMethods[0])};
+                return new[] {new SourceAndTargetMethods(resolvedDestinationType.Methods[0], sourceMethods[0], sourceType, destinationType)};
             }
 
             return resolvedDestinationType.Methods
                 .Select(targetMethod =>
                     new SourceAndTargetMethods(
                         targetMethod,
-                        sourceMethods.Single(sourceMethod => sourceMethod.Name == targetMethod.Name)))
+                        sourceMethods.Single(sourceMethod => sourceMethod.Name == targetMethod.Name), sourceType, destinationType))
                 .ToArray();
         }
     }

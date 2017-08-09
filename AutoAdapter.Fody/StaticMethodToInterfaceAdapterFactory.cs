@@ -52,7 +52,7 @@ namespace AutoAdapter.Fody
             var membersToAdd =
                 membersCreator.CreateMembers(
                     module,
-                    new SourceAndTargetMethods(destinationMethod, sourceMethod),
+                    new SourceAndTargetMethods(destinationMethod, sourceMethod, request.SourceStaticClass, request.DestinationType),
                     request.ExtraParametersObjectType);
 
             var adapterType = new TypeDefinition(

@@ -58,6 +58,7 @@
     <Compile Include="CompositeModuleProcessor.cs" />
     <Compile Include="DTOs\AdaptationMethod.cs" />
     <Compile Include="DTOs\MembersToAdd.cs" />
+    <Compile Include="DTOs\ParameterInformation.cs" />
     <Compile Include="DTOs\StaticMethodAdaptationMethod.cs" />
     <Compile Include="DTOs\StaticMethodAdaptationRequest.cs" />
     <Compile Include="DTOs\StaticMethodToDelegateAdaptationRequest.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="InstructionUtilities.cs" />
     <Compile Include="Interfaces\IMembersCreatorForAdapterThatAdaptsFromStaticMethod.cs" />
     <Compile Include="MembersCreatorForAdapterThatAdaptsFromStaticMethod.cs" />
+    <Compile Include="ParameterInformationExtractor.cs" />
     <Compile Include="ReferenceImporterExtensionMethods.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodProcessor.cs" />
     <Compile Include="RefTypeToInterfaceAdaptationMethodsFinder.cs" />

@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\GenericInterfaceToGenericInterfaceTest\TestClass.cs" />
     <Compile Include="StaticMethodToDelegateTests\BasicStaticMethodToDelegateTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethodAndDifferentParametersOrderTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethod_TwoRequestsEachWithDifferentExtraParameterValueTest\TestClass.cs" />
@@ -91,5 +92,6 @@
       <Name>AutoAdapter.Fody</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

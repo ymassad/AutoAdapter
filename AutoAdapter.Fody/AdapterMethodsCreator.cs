@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 using AutoAdapter.Fody.DTOs;
 using AutoAdapter.Fody.Interfaces;
@@ -25,12 +24,9 @@ namespace AutoAdapter.Fody
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField)
         {
-            var resolvedDestinationType = request.DestinationType.Resolve();
-
-            var resolvedSourceType = request.SourceType.Resolve();
 
             return sourceAndTargetMethodsMapper
-                .CreateMap(resolvedDestinationType, resolvedSourceType)
+                .CreateMap(request.DestinationType, request.SourceType)
                 .Select(targetAndSourceMethod =>
                     CreateAdapterMethod(adaptedField, extraParametersField, targetAndSourceMethod))
                 .ToArray();
@@ -49,8 +45,10 @@ namespace AutoAdapter.Fody
 
             foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
             {
+                var parameterInformation = ParameterInformationExtractor.Extract(param, targetAndSourceMethod.TargetType);
+
                 var paramOnMethodOnAdapter =
-                    new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
+                    new ParameterDefinition(parameterInformation.Name, parameterInformation.Attributes, parameterInformation.ParameterType);
 
                 methodOnAdapter.Parameters.Add(paramOnMethodOnAdapter);
             }
@@ -63,8 +61,14 @@ namespace AutoAdapter.Fody
 
             var targetMethodParametersThatMatchSourceMethodParameters =
                 targetAndSourceMethod.SourceMethod.Parameters
-                    .Select(x => new SourceAndTargetParameters(x,
-                        targetAndSourceMethod.TargetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                    .Select(sourceParameter =>
+                        new SourceAndTargetParameters(
+                            ParameterInformationExtractor.Extract(sourceParameter, targetAndSourceMethod.SourceType),
+                            targetAndSourceMethod
+                                .TargetMethod
+                                .Parameters
+                                .FirstOrNoValue(p => p.Name == sourceParameter.Name)
+                                .Chain(p => ParameterInformationExtractor.Extract(p, targetAndSourceMethod.TargetType))))
                     .ToArray();
 
             targetMethodParametersThatMatchSourceMethodParameters
@@ -81,7 +85,29 @@ namespace AutoAdapter.Fody
                     ilProcessor.AppendRange(instructions);
                 });
 
-            ilProcessor.Emit(OpCodes.Callvirt, targetAndSourceMethod.SourceMethod);
+            var sourceMethodToCall = targetAndSourceMethod.SourceMethod;
+
+            if (sourceMethodToCall.Parameters.Any(x => x.ParameterType.IsGenericParameter))
+            {
+                var methodReferenceOnClosedGenericSourceType =
+                    new MethodReference(
+                        sourceMethodToCall.Name,
+                        sourceMethodToCall.ReturnType,
+                        targetAndSourceMethod.SourceType)
+                {
+                    HasThis = sourceMethodToCall.HasThis,
+                    CallingConvention = sourceMethodToCall.CallingConvention,
+                    ExplicitThis = sourceMethodToCall.ExplicitThis
+                };
+
+                methodReferenceOnClosedGenericSourceType.Parameters.AddRange(sourceMethodToCall.Parameters);
+
+                ilProcessor.Emit(OpCodes.Callvirt, methodReferenceOnClosedGenericSourceType);
+            }
+            else
+            {
+                ilProcessor.Emit(OpCodes.Callvirt, sourceMethodToCall);
+            }
 
             ilProcessor.Emit(OpCodes.Ret);
 

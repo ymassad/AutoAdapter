@@ -5,8 +5,6 @@ namespace AutoAdapter.Fody.Interfaces
 {
     public interface ISourceAndTargetMethodsMapper
     {
-        SourceAndTargetMethods[] CreateMap(
-            TypeDefinition resolvedDestinationType,
-            TypeDefinition resolvedSourceType);
+        SourceAndTargetMethods[] CreateMap(TypeReference destinationType, TypeReference sourceType);
     }
 }

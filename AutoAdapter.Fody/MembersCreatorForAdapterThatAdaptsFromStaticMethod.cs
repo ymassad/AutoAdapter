@@ -59,8 +59,14 @@ namespace AutoAdapter.Fody
 
             var targetMethodParametersThatMatchSourceMethodParameters =
                 sourceAndTargetMethods.SourceMethod.Parameters
-                    .Select(x => new SourceAndTargetParameters(x,
-                        sourceAndTargetMethods.TargetMethod.Parameters.FirstOrNoValue(p => p.Name == x.Name)))
+                    .Select(sourceParam =>
+                        new SourceAndTargetParameters(
+                            ParameterInformationExtractor.Extract(sourceParam, sourceAndTargetMethods.SourceType),
+                            sourceAndTargetMethods
+                                .TargetMethod
+                                .Parameters
+                                .FirstOrNoValue(p => p.Name == sourceParam.Name)
+                                .Chain(p => ParameterInformationExtractor.Extract(p, sourceAndTargetMethods.TargetType))))
                     .ToArray();
 
             targetMethodParametersThatMatchSourceMethodParameters

@@ -58,6 +58,7 @@
     <Compile Include="CompositeModuleProcessor.cs" />
     <Compile Include="DTOs\AdaptationMethod.cs" />
     <Compile Include="DTOs\MembersToAdd.cs" />
+    <Compile Include="DTOs\MethodOnAReferencedType.cs" />
     <Compile Include="DTOs\ParameterInformation.cs" />
     <Compile Include="DTOs\StaticMethodAdaptationMethod.cs" />
     <Compile Include="DTOs\StaticMethodAdaptationRequest.cs" />

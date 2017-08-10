@@ -43,11 +43,11 @@ namespace AutoAdapter.Fody
         {
             var methodOnAdapter =
                 new MethodDefinition(
-                    sourceAndTargetMethods.TargetMethod.Name,
+                    sourceAndTargetMethods.TargetMethod.MethodDefinition.Name,
                     MethodAttributes.Public | MethodAttributes.Virtual,
-                    sourceAndTargetMethods.TargetMethod.ReturnType);
+                    sourceAndTargetMethods.TargetMethod.MethodDefinition.ReturnType);
 
-            foreach (var param in sourceAndTargetMethods.TargetMethod.Parameters)
+            foreach (var param in sourceAndTargetMethods.TargetMethod.MethodDefinition.Parameters)
             {
                 var paramOnMethodOnAdapter =
                     new ParameterDefinition(param.Name, param.Attributes, param.ParameterType);
@@ -58,15 +58,14 @@ namespace AutoAdapter.Fody
             var ilProcessor = methodOnAdapter.Body.GetILProcessor();
 
             var targetMethodParametersThatMatchSourceMethodParameters =
-                sourceAndTargetMethods.SourceMethod.Parameters
+                sourceAndTargetMethods.SourceMethod.MethodDefinition.Parameters
                     .Select(sourceParam =>
                         new SourceAndTargetParameters(
-                            ParameterInformationExtractor.Extract(sourceParam, sourceAndTargetMethods.SourceType),
-                            sourceAndTargetMethods
-                                .TargetMethod
+                            ParameterInformationExtractor.Extract(sourceParam, sourceAndTargetMethods.SourceMethod.ReferencedType),
+                            sourceAndTargetMethods.TargetMethod.MethodDefinition
                                 .Parameters
                                 .FirstOrNoValue(p => p.Name == sourceParam.Name)
-                                .Chain(p => ParameterInformationExtractor.Extract(p, sourceAndTargetMethods.TargetType))))
+                                .Chain(p => ParameterInformationExtractor.Extract(p, sourceAndTargetMethods.TargetMethod.ReferencedType))))
                     .ToArray();
 
             targetMethodParametersThatMatchSourceMethodParameters
@@ -83,7 +82,7 @@ namespace AutoAdapter.Fody
                     ilProcessor.AppendRange(instructions);
                 });
 
-            ilProcessor.Emit(OpCodes.Call, sourceAndTargetMethods.SourceMethod);
+            ilProcessor.Emit(OpCodes.Call, sourceAndTargetMethods.SourceMethod.MethodDefinition);
 
             ilProcessor.Emit(OpCodes.Ret);
 

@@ -36,12 +36,12 @@ namespace AutoAdapter.Fody
             Maybe<FieldDefinition> extraParametersField,
             SourceAndTargetMethods targetAndSourceMethod)
         {
-            var targetMethodReturnType = targetAndSourceMethod.TargetMethod.ReturnType;
+            var targetMethodReturnType = targetAndSourceMethod.TargetMethod.MethodDefinition.ReturnType;
 
             if (targetMethodReturnType.IsGenericParameter)
             {
                 var genericParameterIndex =
-                    targetAndSourceMethod.TargetType
+                    targetAndSourceMethod.TargetMethod.ReferencedType
                         .Resolve()
                         .GenericParameters
                         .Select((item, index) => new {item, index})
@@ -50,18 +50,18 @@ namespace AutoAdapter.Fody
                         .First();
 
                 targetMethodReturnType =
-                    ((GenericInstanceType) targetAndSourceMethod.TargetType).GenericArguments[genericParameterIndex];
+                    ((GenericInstanceType) targetAndSourceMethod.TargetMethod.ReferencedType).GenericArguments[genericParameterIndex];
             }
 
             var methodOnAdapter =
                 new MethodDefinition(
-                    targetAndSourceMethod.TargetMethod.Name,
+                    targetAndSourceMethod.TargetMethod.MethodDefinition.Name,
                     MethodAttributes.Public | MethodAttributes.Virtual,
                     targetMethodReturnType);
 
-            foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
+            foreach (var param in targetAndSourceMethod.TargetMethod.MethodDefinition.Parameters)
             {
-                var parameterInformation = ParameterInformationExtractor.Extract(param, targetAndSourceMethod.TargetType);
+                var parameterInformation = ParameterInformationExtractor.Extract(param, targetAndSourceMethod.TargetMethod.ReferencedType);
 
                 var paramOnMethodOnAdapter =
                     new ParameterDefinition(parameterInformation.Name, parameterInformation.Attributes, parameterInformation.ParameterType);
@@ -76,15 +76,14 @@ namespace AutoAdapter.Fody
             ilProcessor.Emit(OpCodes.Ldfld, adaptedField);
 
             var targetMethodParametersThatMatchSourceMethodParameters =
-                targetAndSourceMethod.SourceMethod.Parameters
+                targetAndSourceMethod.SourceMethod.MethodDefinition.Parameters
                     .Select(sourceParameter =>
                         new SourceAndTargetParameters(
-                            ParameterInformationExtractor.Extract(sourceParameter, targetAndSourceMethod.SourceType),
-                            targetAndSourceMethod
-                                .TargetMethod
+                            ParameterInformationExtractor.Extract(sourceParameter, targetAndSourceMethod.SourceMethod.ReferencedType),
+                            targetAndSourceMethod.TargetMethod.MethodDefinition
                                 .Parameters
                                 .FirstOrNoValue(p => p.Name == sourceParameter.Name)
-                                .Chain(p => ParameterInformationExtractor.Extract(p, targetAndSourceMethod.TargetType))))
+                                .Chain(p => ParameterInformationExtractor.Extract(p, targetAndSourceMethod.TargetMethod.ReferencedType))))
                     .ToArray();
 
             targetMethodParametersThatMatchSourceMethodParameters
@@ -101,7 +100,7 @@ namespace AutoAdapter.Fody
                     ilProcessor.AppendRange(instructions);
                 });
 
-            var sourceMethodToCall = targetAndSourceMethod.SourceMethod;
+            var sourceMethodToCall = targetAndSourceMethod.SourceMethod.MethodDefinition;
 
             if (sourceMethodToCall.Parameters.Any(x => x.ParameterType.IsGenericParameter) || sourceMethodToCall.ReturnType.IsGenericParameter)
             {
@@ -109,7 +108,7 @@ namespace AutoAdapter.Fody
                     new MethodReference(
                         sourceMethodToCall.Name,
                         sourceMethodToCall.ReturnType,
-                        targetAndSourceMethod.SourceType)
+                        targetAndSourceMethod.SourceMethod.ReferencedType)
                 {
                     HasThis = sourceMethodToCall.HasThis,
                     CallingConvention = sourceMethodToCall.CallingConvention,

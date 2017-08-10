@@ -22,14 +22,12 @@ namespace AutoAdapter.Fody
 
             if (sourceMethods.Length == 1 && resolvedDestinationType.Methods.Count == 1)
             {
-                return new[] {new SourceAndTargetMethods(resolvedDestinationType.Methods[0], sourceMethods[0], sourceType, destinationType)};
+                return new[] {new SourceAndTargetMethods(new MethodOnAReferencedType(sourceType, sourceMethods[0]), new MethodOnAReferencedType(destinationType, resolvedDestinationType.Methods[0]))};
             }
 
             return resolvedDestinationType.Methods
                 .Select(targetMethod =>
-                    new SourceAndTargetMethods(
-                        targetMethod,
-                        sourceMethods.Single(sourceMethod => sourceMethod.Name == targetMethod.Name), sourceType, destinationType))
+                    new SourceAndTargetMethods(new MethodOnAReferencedType(sourceType, sourceMethods.Single(sourceMethod => sourceMethod.Name == targetMethod.Name)), new MethodOnAReferencedType(destinationType, targetMethod)))
                 .ToArray();
         }
     }

@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="AdapterMethodAttribute.cs" />
     <Compile Include="ClassSourceTest\TestClass.cs" />
+    <Compile Include="InterfaceToInterfaceTests\GenericInterfaceToGenericInterfaceWhereReturnTypeIsGenericTest\TestClass.cs" />
     <Compile Include="InterfaceToInterfaceTests\GenericInterfaceToGenericInterfaceTest\TestClass.cs" />
     <Compile Include="StaticMethodToDelegateTests\BasicStaticMethodToDelegateTest\TestClass.cs" />
     <Compile Include="StaticMethodToInterfaceTests\ExtraParameterOnSourceMethodAndDifferentParametersOrderTest\TestClass.cs" />

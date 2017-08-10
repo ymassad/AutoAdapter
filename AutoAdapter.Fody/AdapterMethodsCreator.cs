@@ -24,7 +24,6 @@ namespace AutoAdapter.Fody
             FieldDefinition adaptedField,
             Maybe<FieldDefinition> extraParametersField)
         {
-
             return sourceAndTargetMethodsMapper
                 .CreateMap(request.DestinationType, request.SourceType)
                 .Select(targetAndSourceMethod =>
@@ -37,11 +36,28 @@ namespace AutoAdapter.Fody
             Maybe<FieldDefinition> extraParametersField,
             SourceAndTargetMethods targetAndSourceMethod)
         {
+            var targetMethodReturnType = targetAndSourceMethod.TargetMethod.ReturnType;
+
+            if (targetMethodReturnType.IsGenericParameter)
+            {
+                var genericParameterIndex =
+                    targetAndSourceMethod.TargetType
+                        .Resolve()
+                        .GenericParameters
+                        .Select((item, index) => new {item, index})
+                        .Where(x => x.item.FullName == targetMethodReturnType.FullName)
+                        .Select(x => x.index)
+                        .First();
+
+                targetMethodReturnType =
+                    ((GenericInstanceType) targetAndSourceMethod.TargetType).GenericArguments[genericParameterIndex];
+            }
+
             var methodOnAdapter =
                 new MethodDefinition(
                     targetAndSourceMethod.TargetMethod.Name,
                     MethodAttributes.Public | MethodAttributes.Virtual,
-                    targetAndSourceMethod.TargetMethod.ReturnType);
+                    targetMethodReturnType);
 
             foreach (var param in targetAndSourceMethod.TargetMethod.Parameters)
             {
@@ -87,7 +103,7 @@ namespace AutoAdapter.Fody
 
             var sourceMethodToCall = targetAndSourceMethod.SourceMethod;
 
-            if (sourceMethodToCall.Parameters.Any(x => x.ParameterType.IsGenericParameter))
+            if (sourceMethodToCall.Parameters.Any(x => x.ParameterType.IsGenericParameter) || sourceMethodToCall.ReturnType.IsGenericParameter)
             {
                 var methodReferenceOnClosedGenericSourceType =
                     new MethodReference(
